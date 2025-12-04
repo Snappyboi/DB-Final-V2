@@ -1,20 +1,31 @@
 package frontend;
 
 import backend.BackendService;
-import backend.Media;
 import frontend.components.ImageUtils;
 import frontend.components.NavBar;
-import frontend.components.ThumbnailCard;
+import frontend.components.RoundedButton;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.Desktop;
+import java.net.URI;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 // Watch History: shows what the user watched.
 public class WatchHistoryPage extends JPanel {
     private final Navigation nav;
     private JPanel resultsPanel;
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final int CARD_POSTER_WIDTH = 140;
+    private static final int CARD_POSTER_HEIGHT = 210;
 
     public WatchHistoryPage(Navigation nav) {
         this.nav = nav;
@@ -25,7 +36,7 @@ public class WatchHistoryPage extends JPanel {
 
         resultsPanel = new JPanel();
         resultsPanel.setOpaque(false);
-        resultsPanel.setLayout(new WrapFlowLayout(FlowLayout.LEFT, 12, 12));
+        resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
 
         JPanel content = new JPanel(new BorderLayout());
         content.setOpaque(false);
@@ -50,13 +61,9 @@ public class WatchHistoryPage extends JPanel {
     public void refresh() {
         resultsPanel.removeAll();
         String username = nav.getCurrentUsername();
-        List<Media> history;
-        try {
-            history = BackendService.getWatchHistory(username);
-        } catch (Exception e) {
-            history = new ArrayList<>();
-        }
-        if (history == null || history.isEmpty()) {
+        Map<String, HistoryItem> historyByTitle = loadHistoryWithTimes(username);
+
+        if (historyByTitle.isEmpty()) {
             JLabel empty = new JLabel("No watch history yet.");
             empty.setForeground(Theme.TEXT_SECONDARY);
             empty.setFont(Theme.fontRegular(14));
@@ -64,52 +71,118 @@ public class WatchHistoryPage extends JPanel {
             resultsPanel.setLayout(new BorderLayout());
             resultsPanel.add(empty, BorderLayout.NORTH);
         } else {
-            resultsPanel.setLayout(new WrapFlowLayout(FlowLayout.LEFT, 12, 12));
-            for (Media m : history) {
-                String t = m.getTitle();
-                Image img = ImageUtils.loadPosterImageForTitle(t, 160, 240);
-                ThumbnailCard card = new ThumbnailCard(t, img);
-                card.setOnClick(() -> nav.showMediaDetails(t));
-                resultsPanel.add(card);
+            resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
+            for (Map.Entry<String, HistoryItem> entry : historyByTitle.entrySet()) {
+                resultsPanel.add(buildHistoryCard(entry.getKey(), entry.getValue()));
+                resultsPanel.add(Box.createVerticalStrut(12));
             }
         }
         resultsPanel.revalidate();
         resultsPanel.repaint();
     }
 
-    // FlowLayout that wraps to the next line
-    static class WrapFlowLayout extends FlowLayout {
-        public WrapFlowLayout(int align, int hgap, int vgap) { super(align, hgap, vgap); }
-        @Override
-        public Dimension preferredLayoutSize(Container target) { return layoutSize(target, true); }
-        @Override
-        public Dimension minimumLayoutSize(Container target) { Dimension d = layoutSize(target, false); d.width -= (getHgap() + 1); return d; }
-        private Dimension layoutSize(Container target, boolean preferred) {
-            synchronized (target.getTreeLock()) {
-                int maxWidth = target.getWidth();
-                if (maxWidth == 0) maxWidth = Integer.MAX_VALUE;
-                Insets insets = target.getInsets();
-                int hgap = getHgap();
-                int vgap = getVgap();
-                int x = 0; int y = insets.top + vgap; int rowHeight = 0; int reqWidth = 0;
-                for (Component c : target.getComponents()) {
-                    if (!c.isVisible()) continue;
-                    Dimension d = preferred ? c.getPreferredSize() : c.getMinimumSize();
-                    if (x == 0 || x + d.width <= maxWidth - insets.right) {
-                        if (x > 0) x += hgap;
-                        x += d.width;
-                        rowHeight = Math.max(rowHeight, d.height);
-                    } else {
-                        y += rowHeight + vgap;
-                        reqWidth = Math.max(reqWidth, x);
-                        x = d.width;
-                        rowHeight = d.height;
-                    }
-                }
-                y += rowHeight + insets.bottom + vgap;
-                reqWidth = Math.max(reqWidth, x) + insets.left + insets.right;
-                return new Dimension(reqWidth, y);
-            }
+    private Map<String, HistoryItem> loadHistoryWithTimes(String username) {
+        Map<String, HistoryItem> byTitle = new LinkedHashMap<>();
+        List<String[]> rows;
+        try {
+            rows = BackendService.getWatchHistoryRowsByUsername(username);
+        } catch (Exception e) {
+            rows = new ArrayList<>();
         }
+        if (rows == null || rows.isEmpty()) return byTitle;
+
+        for (String[] r : rows) {
+            if (r == null || r.length == 0) continue;
+            String title = r[0];
+            if (title == null || title.isBlank()) continue;
+            String when = (r.length > 1) ? formatWatchDate(r[1]) : "-";
+            String imdb = (r.length > 2) ? r[2] : null;
+            HistoryItem item = byTitle.computeIfAbsent(title, k -> new HistoryItem());
+            item.times.add(when);
+            if (imdb != null && (item.imdbLink == null || item.imdbLink.isBlank())) item.imdbLink = imdb;
+        }
+        return byTitle;
+    }
+
+    private String formatWatchDate(String raw) {
+        if (raw == null || raw.isBlank()) return "-";
+        try {
+            LocalDateTime dt = Timestamp.valueOf(raw).toLocalDateTime();
+            return dt.format(TIME_FORMATTER);
+        } catch (IllegalArgumentException ignored) {
+            // Fall through to try parsing as ISO/local date-time
+        }
+        try {
+            LocalDateTime dt = LocalDateTime.parse(raw);
+            return dt.format(TIME_FORMATTER);
+        } catch (DateTimeParseException ignored) { }
+        return raw;
+    }
+
+    private JPanel buildHistoryCard(String title, HistoryItem item) {
+        JPanel card = new JPanel(new BorderLayout(16, 0));
+        card.setOpaque(true);
+        card.setBackground(Theme.SURFACE);
+        card.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
+
+        Image img = ImageUtils.loadPosterImageForTitle(title, CARD_POSTER_WIDTH, CARD_POSTER_HEIGHT);
+        JLabel poster = new JLabel(new ImageIcon(img));
+        poster.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 0, 120), 1));
+        card.add(poster, BorderLayout.WEST);
+
+        JPanel right = new JPanel();
+        right.setOpaque(false);
+        right.setLayout(new BorderLayout(0, 10));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setForeground(Theme.TEXT_PRIMARY);
+        titleLabel.setFont(Theme.fontBold(18));
+        right.add(titleLabel, BorderLayout.NORTH);
+
+        JLabel timesLabel = new JLabel(buildTimesHtml(item.times));
+        timesLabel.setForeground(Theme.TEXT_SECONDARY);
+        timesLabel.setFont(Theme.fontRegular(14));
+        right.add(timesLabel, BorderLayout.CENTER);
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        actions.setOpaque(false);
+        RoundedButton streamBtn = new RoundedButton("Stream again").red();
+        streamBtn.addActionListener(e -> nav.showMediaDetails(title));
+        actions.add(streamBtn);
+
+        RoundedButton imdbBtn = new RoundedButton("View on IMDb").gold();
+        imdbBtn.setEnabled(item.imdbLink != null && !item.imdbLink.isBlank());
+        imdbBtn.addActionListener(e -> openImdb(item.imdbLink));
+        actions.add(imdbBtn);
+
+        right.add(actions, BorderLayout.SOUTH);
+        card.add(right, BorderLayout.CENTER);
+        return card;
+    }
+
+    private String buildTimesHtml(List<String> times) {
+        if (times == null || times.isEmpty()) return "<html><span style='color:#c8c8c8;'>No watch times recorded.</span></html>";
+        String list = times.stream()
+                .map(t -> "• " + (t == null ? "-" : t))
+                .collect(Collectors.joining("<br>"));
+        return "<html><span style='color:#c8c8c8;'>Viewed at (24-hour):<br>" + list + "</span></html>";
+    }
+
+    private void openImdb(String link) {
+        if (link == null || link.isBlank()) return;
+        try {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(new URI(link));
+            } else {
+                JOptionPane.showMessageDialog(this, "IMDb link: " + link);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Could not open IMDb link. URL: " + link);
+        }
+    }
+
+    private static class HistoryItem {
+        List<String> times = new ArrayList<>();
+        String imdbLink;
     }
 }

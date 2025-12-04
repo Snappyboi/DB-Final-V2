@@ -183,7 +183,7 @@ public class QueryDAO {
         List<String[]> rows = new ArrayList<>();
         if (username == null || username.isEmpty()) return rows;
         String memberIdSql = "SELECT ID AS member_id FROM Member WHERE username = ?";
-        String historySql = "SELECT m.title, wh.watch_date FROM Watch_History wh " +
+        String historySql = "SELECT m.title, wh.watch_date, m.IMBD_link FROM Watch_History wh " +
                 "JOIN Media m ON m.media_ID = wh.media_id WHERE wh.member_id = ? ORDER BY wh.watch_date DESC LIMIT 500";
         try (Connection conn = DBConnection.getConnection()) {
             Integer memberId = null;
@@ -198,7 +198,7 @@ public class QueryDAO {
                 ps.setInt(1, memberId);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        rows.add(new String[]{rs.getString(1), rs.getString(2)});
+                        rows.add(new String[]{rs.getString(1), rs.getString(2), rs.getString(3)});
                     }
                 }
             }
