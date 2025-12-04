@@ -225,7 +225,7 @@ public class UserDAO {
         }
     }
 
-    // Insert into Person (few variants). Returns id or null.
+    // Insert into Person
     private Integer tryInsertPerson(Connection conn, String name, String email, String address, String phone) {
         String colName = "na" + "me";          // name
         String colPhoneNum = "phone_" + "number"; // phone_number
@@ -256,7 +256,7 @@ public class UserDAO {
         return null;
     }
 
-    // Public wrapper to create Person (optional table)
+    // Public wrapper to create Person
     public Integer createPerson(String name, String email, String address, String phone) {
         Connection conn = null;
         try {
@@ -274,7 +274,7 @@ public class UserDAO {
         }
     }
 
-    // Create Member using an existing Person ID when possible. Also sets subscription_level/active if columns exist.
+    // Create Member using an existing Person ID
     public boolean createMemberUsingPerson(Integer personId,
                                            String username, String password,
                                            String name, String email, String address, String phone,
@@ -322,23 +322,6 @@ public class UserDAO {
             return false;
         } finally {
             if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
-        }
-    }
-
-    // Update Member.active flag
-    public boolean updateMemberActive(String username, boolean active) {
-        if (username == null || username.isEmpty()) return false;
-        try (Connection conn = DBConnection.getConnection()) {
-            String activeCol = "ac" + "tive";
-            String sql = "UPDATE Member SET " + activeCol + "=? WHERE username=?";
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setBoolean(1, active);
-                ps.setString(2, username);
-                return ps.executeUpdate() > 0;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
         }
     }
 
@@ -399,9 +382,7 @@ public class UserDAO {
         }
     }
 
-    // Create a member with subscription fields. We will try to insert into Person first (if available),
-    // then insert into Member. If Member has columns subscription_level/active, we set them; otherwise we
-    // fall back to the base insert used in createMember.
+    // Create a member with subscription
     public boolean createMemberWithSubscription(String username, String password, String name, String email,
                                                 String address, String phone, String subscriptionLevel, boolean active) {
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) return false;

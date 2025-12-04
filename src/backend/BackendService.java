@@ -22,9 +22,6 @@ public class BackendService {
     public static List<Media> getTopMediaThisMonth(int limit) { return queryDAO.getTopMediaThisMonth(limit); }
     public static List<Media> getTrendingLast24h(int limit) { return queryDAO.getTrendingLast24h(limit); }
 
-    // Watch history
-    public static void logWatch(String username, String mediaTitle) { queryDAO.addWatchHistory(username, mediaTitle); }
-    public static java.util.List<Media> getWatchHistory(String username) { return queryDAO.getWatchHistoryByUsername(username); }
 
     // Account info
     public static java.util.Map<String, String> getMemberAccountInfo(String username) { return userDAO.getMemberAccountInfo(username); }
@@ -68,10 +65,7 @@ public class BackendService {
     }
     public static boolean removeMediaByIdOrTitle(String idOrTitle) { return queryDAO.removeMediaByIdOrTitle(idOrTitle); }
 
-    // Admin: CRUD Member
-    public static boolean createMember(String username, String password, String name, String email, String address, String phone) {
-        return userDAO.createMember(username, password, name, email, address, phone);
-    }
+    // Admin: Remove Member
     public static boolean removeMemberByUsername(String username) { return userDAO.removeMemberByUsername(username); }
 
     // Admin: Create member with subscription (tries Person first; attempts to set subscription columns if present)

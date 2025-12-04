@@ -595,18 +595,4 @@ public class QueryDAO {
             e.printStackTrace();
         }
     }
-    public void deleteMember(int memberID){
-        String sql = """
-                DELETE FROM Member WHERE member_id = ?;
-        """;
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)){
-            ps.setInt(1, memberID);
-            ps.execute();
-        }
-        catch(SQLException e){
-            e.printStackTrace();
-        }
-    }
-
 }
