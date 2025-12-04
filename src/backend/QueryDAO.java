@@ -576,4 +576,37 @@ public class QueryDAO {
             }
         }
     }
+    public void addNewMember(int id, String password, String username, String address, String phoneNum, String email){
+        String sql = """
+                INSERT INTO Member(username, password, address, phoneNum, email)
+                VALUES (?, ?, ?, ?, ?);
+                """;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, id);
+            ps.setString(2, password);
+            ps.setString(3, username);
+            ps.setString(4, address);
+            ps.setString(5, phoneNum);
+            ps.setString(6, email);
+            ps.execute();
+        }
+        catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
+    public void deleteMember(int memberID){
+        String sql = """
+                DELETE FROM Member WHERE member_id = ?;
+        """;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, memberID);
+            ps.execute();
+        }
+        catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
+
 }
