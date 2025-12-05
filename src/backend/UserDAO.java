@@ -328,6 +328,10 @@ public class UserDAO {
             }
             if (id == null) return false;
             conn.setAutoCommit(false);
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Subscribes WHERE ID = ?")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Watch_History WHERE member_id = ?")) {
                 ps.setInt(1, id);
                 ps.executeUpdate();
