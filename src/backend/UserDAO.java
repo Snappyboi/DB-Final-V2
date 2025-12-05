@@ -186,44 +186,6 @@ public class UserDAO {
         return "-";
     }
 
-    // Admin CRUD: Members
-    public boolean createMember(String username, String password, String name, String email, String address, String phone) {
-        if (username == null || username.isEmpty() || password == null || password.isEmpty()) return false;
-        Connection conn = null;
-        try {
-            conn = DBConnection.getConnection();
-            conn.setAutoCommit(false);
-
-            // Try to insert a Person row (best effort)
-            Integer personId = tryInsertPerson(conn, name, email, address, phone);
-
-            // Insert Member row
-            boolean inserted = false;
-            String sql = "INSERT INTO Member(username, password, member_name, email, address, phone_number) VALUES (?, ?, ?, ?, ?, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, username);
-                ps.setString(2, password);
-                ps.setString(3, name);
-                ps.setString(4, email);
-                ps.setString(5, address);
-                ps.setString(6, phone);
-                inserted = ps.executeUpdate() > 0;
-            }
-
-            conn.commit();
-            return inserted;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ignored) {}
-            }
-            return false;
-        } finally {
-            if (conn != null) {
-                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
-            }
-        }
-    }
 
     // Insert into Person
     private Integer tryInsertPerson(Connection conn, String name, String email, String address, String phone) {

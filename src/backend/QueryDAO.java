@@ -110,39 +110,6 @@ public class QueryDAO {
         return results;
     }
 
-    // Get a user's watch history by username (newest first)
-    public List<Media> getWatchHistoryByUsername(String username) {
-        List<Media> results = new ArrayList<>();
-        if (username == null || username.isEmpty()) return results;
-
-        String memberIdSql = "SELECT ID AS member_id FROM Member WHERE username = ?";
-        String historySql = "SELECT m.media_ID, m.title, m.genre, m.release_date, m.IMBD_link " +
-                "FROM Watch_History wh " +
-                "JOIN Media m ON m.media_ID = wh.media_id " +
-                "WHERE wh.member_id = ? " +
-                "ORDER BY wh.watch_date DESC LIMIT 100";
-
-        try (Connection conn = DBConnection.getConnection()) {
-            Integer memberId = null;
-            try (PreparedStatement ps = conn.prepareStatement(memberIdSql)) {
-                ps.setString(1, username);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) memberId = rs.getInt("member_id");
-                }
-            }
-            if (memberId == null) return results;
-
-            try (PreparedStatement ps = conn.prepareStatement(historySql)) {
-                ps.setInt(1, memberId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) results.add(mapMedia(rs));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return results;
-    }
 
     // Admin: search member streaming by username or media title.
     public List<String[]> searchMemberStreaming(String query) {
@@ -518,81 +485,5 @@ public class QueryDAO {
         }
     }
 
-    // Log a watch using username + title (resolves IDs then inserts)
-    public void addWatchHistory(String username, String mediaTitle) {
-        if (username == null || username.isEmpty() || mediaTitle == null || mediaTitle.isEmpty()) {
-            return;
-        }
-
-        String memberIdSqlPrimary = "SELECT ID AS member_id FROM Member WHERE username = ?";
-        String mediaSql = "SELECT media_ID FROM Media WHERE title = ? LIMIT 1";
-        String insertSql = "INSERT INTO Watch_History (member_id, media_id, watch_date) VALUES (?, ?, NOW())";
-
-        Connection conn = null;
-        try {
-            conn = DBConnection.getConnection();
-            conn.setAutoCommit(false);
-
-            Integer memberId = null;
-            String mediaId = null;
-
-            // Find member id by username
-            try (PreparedStatement ps = conn.prepareStatement(memberIdSqlPrimary)) {
-                ps.setString(1, username);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) memberId = rs.getInt("member_id");
-                }
-            }
-
-            // Find media id by title (string like 'M001')
-            try (PreparedStatement ps = conn.prepareStatement(mediaSql)) {
-                ps.setString(1, mediaTitle);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) mediaId = rs.getString("media_ID");
-                }
-            }
-
-            if (memberId == null || mediaId == null) {
-                conn.rollback();
-                return;
-            }
-
-            try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
-                ps.setInt(1, memberId);
-                ps.setString(2, mediaId);
-                ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()));
-                ps.executeUpdate();
-            }
-
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-            if (conn != null) {
-                try { conn.rollback(); } catch (Exception ignored) {}
-            }
-        } finally {
-            if (conn != null) {
-                try { conn.setAutoCommit(true); conn.close(); } catch (Exception ignored) {}
-            }
-        }
-    }
-    public void addNewMember(int id, String password, String username, String address, String phoneNum, String email){
-        String sql = """
-                INSERT INTO Member(username, password, address, phoneNum, email)
-                VALUES (?, ?, ?, ?, ?);
-                """;
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)){
-            ps.setInt(1, id);
-            ps.setString(2, password);
-            ps.setString(3, username);
-            ps.setString(4, address);
-            ps.setString(5, phoneNum);
-            ps.setString(6, email);
-            ps.execute();
-        }
-        catch(SQLException e){
-            e.printStackTrace();
-        }
-    }
+    
 }
