@@ -26,7 +26,7 @@ public class AdminHomePage extends JPanel {
         RoundedButton addMedia = new RoundedButton("Add Media").gold();
         RoundedButton removeMedia = new RoundedButton("Remove Media").gold();
         RoundedButton addMember = new RoundedButton("Add Member").gold();
-        RoundedButton removeMember = new RoundedButton("Remove Member");
+        RoundedButton removeMember = new RoundedButton("Remove Member").gold();
         RoundedButton trends = new RoundedButton("View Trends").gold();
         RoundedButton memberStreaming = new RoundedButton("Member Streaming").gold();
         RoundedButton subscriptions = new RoundedButton("Subscriptions").gold();
