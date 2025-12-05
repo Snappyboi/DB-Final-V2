@@ -19,7 +19,7 @@ public class AdminAddPersonPage extends JPanel {
     public AdminAddPersonPage(Navigation nav) {
         this.nav = nav;
         setLayout(new BorderLayout());
-        setOpaque(false);
+        setBackground(AdminTheme.BACKGROUND);
 
         add(new NavBar(nav, true), BorderLayout.NORTH);
 

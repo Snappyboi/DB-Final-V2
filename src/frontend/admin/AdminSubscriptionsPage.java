@@ -6,7 +6,6 @@ import frontend.components.NavBar;
 import frontend.components.RoundedButton;
 import frontend.components.SurfacePanel;
 import frontend.components.TableStyler;
-import frontend.components.AdminTableRenderers;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -22,7 +21,7 @@ public class AdminSubscriptionsPage extends JPanel {
     public AdminSubscriptionsPage(Navigation nav) {
         this.nav = nav;
         setLayout(new BorderLayout());
-        setOpaque(false);
+        setBackground(AdminTheme.BACKGROUND);
 
         add(new NavBar(nav, true), BorderLayout.NORTH);
 
@@ -44,8 +43,6 @@ public class AdminSubscriptionsPage extends JPanel {
         };
         table = new JTable(model);
         TableStyler.applyAdminStyle(table);
-        table.getColumnModel().getColumn(0).setCellRenderer(AdminTableRenderers.avatarWithNameRenderer());
-        table.getColumnModel().getColumn(1).setCellRenderer(AdminTableRenderers.avatarWithNameRenderer());
 
         // open member detail when double-click on a row
         table.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -65,8 +62,7 @@ public class AdminSubscriptionsPage extends JPanel {
         card.setLayout(new BorderLayout());
         card.setBorder(BorderFactory.createEmptyBorder(12, 24, 24, 24));
         JScrollPane sp = new JScrollPane(table);
-        sp.setOpaque(false);
-        sp.getViewport().setOpaque(false);
+        sp.getViewport().setBackground(AdminTheme.BACKGROUND);
         card.add(sp, BorderLayout.CENTER);
 
         JPanel center = new JPanel(new BorderLayout());

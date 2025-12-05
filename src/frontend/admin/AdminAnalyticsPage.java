@@ -6,7 +6,6 @@ import frontend.Navigation;
 import frontend.components.NavBar;
 import frontend.components.SurfacePanel;
 import frontend.components.TableStyler;
-import frontend.components.AdminTableRenderers;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -23,7 +22,7 @@ public class AdminAnalyticsPage extends JPanel {
     public AdminAnalyticsPage(Navigation nav) {
         this.nav = nav;
         setLayout(new BorderLayout());
-        setOpaque(false);
+        setBackground(AdminTheme.BACKGROUND);
 
         add(new NavBar(nav, true), BorderLayout.NORTH);
 
@@ -59,7 +58,6 @@ public class AdminAnalyticsPage extends JPanel {
         };
         table = new JTable(model);
         TableStyler.applyAdminStyle(table);
-        table.getColumnModel().getColumn(1).setCellRenderer(AdminTableRenderers.posterWithTitleRenderer());
 
         // double-click to open details
         table.addMouseListener(new java.awt.event.MouseAdapter() {

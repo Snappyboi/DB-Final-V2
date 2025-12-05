@@ -2,7 +2,6 @@ package frontend.admin;
 
 import frontend.Navigation;
 import frontend.components.NavBar;
-import frontend.components.AdminTableRenderers;
 import frontend.components.RoundedButton;
 
 import javax.swing.*;
@@ -16,7 +15,7 @@ public class AdminHomePage extends JPanel {
     public AdminHomePage(Navigation nav) {
         this.nav = nav;
         setLayout(new BorderLayout());
-        setOpaque(false);
+        setBackground(AdminTheme.BACKGROUND);
 
         add(new NavBar(nav, true), BorderLayout.NORTH);
 
@@ -95,8 +94,6 @@ public class AdminHomePage extends JPanel {
         DefaultTableModel model = new DefaultTableModel(cols, 0) { @Override public boolean isCellEditable(int r,int c){ return false; } };
         table = new JTable(model);
         frontend.components.TableStyler.applyAdminStyle(table);
-        // Poster/title styling for activity rows
-        table.getColumnModel().getColumn(1).setCellRenderer(AdminTableRenderers.posterWithTitleRenderer());
 
         frontend.components.SurfacePanel card = new frontend.components.SurfacePanel();
         card.setBackground(AdminTheme.SURFACE_ELEVATED);

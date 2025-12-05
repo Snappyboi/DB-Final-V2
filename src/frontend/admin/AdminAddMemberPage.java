@@ -18,7 +18,7 @@ public class AdminAddMemberPage extends JPanel {
     public AdminAddMemberPage(Navigation nav) {
         this.nav = nav;
         setLayout(new BorderLayout());
-        setOpaque(false);
+        setBackground(AdminTheme.BACKGROUND);
 
         add(new NavBar(nav, true), BorderLayout.NORTH);
 
