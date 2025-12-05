@@ -39,6 +39,15 @@ public class MediaDetailsPage extends JPanel {
         gc.insets = new Insets(8,8,8,8);
         gc.anchor = GridBagConstraints.NORTHWEST;
 
+        RoundedButton back = new RoundedButton("← Back");
+        back.addActionListener(e -> nav.showMemberHome());
+
+        gc.gridx = 0;
+        gc.gridy = 0;
+        gc.gridheight = 1;
+        gc.fill = GridBagConstraints.NONE;
+        content.add(back, gc);
+
         // Poster
         SurfacePanel posterCard = new SurfacePanel();
         posterCard.setLayout(new BorderLayout());
@@ -46,14 +55,17 @@ public class MediaDetailsPage extends JPanel {
         posterLabel = ImageUtils.createPosterLabelForTitle("", 260, 380);
         posterCard.add(posterLabel, BorderLayout.CENTER);
 
-        gc.gridx = 0; gc.gridy = 0; gc.gridheight = 7; // span all rows on the left
+        gc.gridx = 0;
+        gc.gridy = 1;
+        gc.gridheight = 7;
+        gc.fill = GridBagConstraints.NONE;
         content.add(posterCard, gc);
 
         // Title
         titleLabel = new JLabel("Title");
         titleLabel.setForeground(Theme.TEXT_PRIMARY);
         titleLabel.setFont(Theme.fontBold(28));
-        gc.gridx = 1; gc.gridy = 0; gc.gridheight = 1; gc.weightx = 1; gc.fill = GridBagConstraints.HORIZONTAL;
+        gc.gridx = 1; gc.gridy = 1; gc.gridheight = 1; gc.weightx = 1; gc.fill = GridBagConstraints.HORIZONTAL;
         content.add(titleLabel, gc);
 
         // Description
@@ -61,7 +73,7 @@ public class MediaDetailsPage extends JPanel {
         descriptionLabel.setForeground(Theme.TEXT_SECONDARY);
         descriptionLabel.setFont(Theme.fontRegular(14));
         descriptionLabel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
-        gc.gridy = 1;
+        gc.gridy = 2;
         content.add(descriptionLabel, gc);
 
         directorLabel = labelRow("Director", "-");
@@ -69,19 +81,23 @@ public class MediaDetailsPage extends JPanel {
         genreLabel = labelRow("Genre", "-");
         releaseLabel = labelRow("Release", "-");
 
-        gc.gridy = 2; content.add(directorLabel, gc);
-        gc.gridy = 3; content.add(castLabel, gc);
-        gc.gridy = 4; content.add(genreLabel, gc);
-        gc.gridy = 5; content.add(releaseLabel, gc);
+        gc.gridy = 3; content.add(directorLabel, gc);
+        gc.gridy = 4; content.add(castLabel, gc);
+        gc.gridy = 5; content.add(genreLabel, gc);
+        gc.gridy = 6; content.add(releaseLabel, gc);
 
-        // IMDb link and Watch button
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         actions.setOpaque(false);
+
         imdbLink = linkLabel("View on IMDb");
+
         RoundedButton watch = new RoundedButton("Watch Now").red();
+
         actions.add(imdbLink);
         actions.add(watch);
-        gc.gridy = 6; gc.fill = GridBagConstraints.NONE;
+
+        gc.gridy = 7;
+        gc.fill = GridBagConstraints.NONE;
         content.add(actions, gc);
 
         // Watch Now:  write Watch_History
@@ -162,8 +178,11 @@ public class MediaDetailsPage extends JPanel {
         String dir = "-", cast = "-", genre = "-", release = "-";
         currentImdbUrl = null;
         try {
+            System.out.println("title: " + title);
             backend.Media m = BackendService.getMediaDetailsByTitle(title);
-            if (m == null) m = BackendService.getMediaByTitle(title);
+            if (m == null){ m = BackendService.getMediaByTitle(title);
+               // System.err.println("getMediaDetailsByTitle returned null for title: " + title);
+                }
             if (m != null) {
                 if (m.getImdbLink() != null && !m.getImdbLink().isBlank()) currentImdbUrl = m.getImdbLink();
                 if (m.getDirectors() != null && !m.getDirectors().isBlank()) dir = cleanList(m.getDirectors());
@@ -177,10 +196,15 @@ public class MediaDetailsPage extends JPanel {
         descriptionLabel.setText("Info: " + titleLabel.getText());
 
         setField(directorLabel, "Director", dir);
-        setField(castLabel, "Cast", cast);
+
+        String castDisplay = cast;
+        if ("-".equals(castDisplay)) {
+            castDisplay = "No cast information available";
+        }
+        setField(castLabel, "Cast", castDisplay);
+
         setField(genreLabel, "Genre", genre);
         setField(releaseLabel, "Release", release);
-
         // Load poster
         JLabel newPoster = ImageUtils.createPosterLabelForTitle(title, 260, 380);
         posterLabel.setIcon(newPoster.getIcon());
