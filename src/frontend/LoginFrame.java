@@ -2,6 +2,7 @@ package frontend;
 
 import backend.BackendService;
 import frontend.components.RoundedButton;
+import frontend.components.GradientBackgroundPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -137,12 +138,7 @@ public class LoginFrame extends JPanel {
 
         // ===== Actions =====
         loginBtn.addActionListener(e -> doLogin());
-        registerBtn.addActionListener(e -> JOptionPane.showMessageDialog(
-                this,
-                "Registration placeholder.",
-                "ACED",
-                JOptionPane.INFORMATION_MESSAGE
-        ));
+        registerBtn.addActionListener(e -> showRegisterDialog());
     }
 
     // Expose login button for app shell
@@ -181,6 +177,104 @@ public class LoginFrame extends JPanel {
             nav.showMemberHome();
         } else {
             statusLabel.setText("Incorrect username or password.");
+        }
+    }
+
+    // register
+    private void showRegisterDialog() {
+        Color labelFg = Theme.TEXT_PRIMARY;
+
+        JTextField userField = new JTextField(18);
+        JPasswordField passField = new JPasswordField(18);
+        JTextField nameField = new JTextField(18);
+        JTextField emailField = new JTextField(18);
+        JTextField addressField = new JTextField(18);
+        JTextField phoneField = new JTextField(18);
+
+        stylizeField(userField);
+        stylizeField(passField);
+        stylizeField(nameField);
+        stylizeField(emailField);
+        stylizeField(addressField);
+        stylizeField(phoneField);
+
+        GradientBackgroundPanel root = new GradientBackgroundPanel(new BorderLayout());
+        root.setOpaque(false);
+        root.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        root.setPreferredSize(new Dimension(520, 480));
+
+        JPanel header = new JPanel();
+        header.setOpaque(false);
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.setBorder(BorderFactory.createEmptyBorder(4, 4, 12, 4));
+        JLabel heading = new JLabel("Create your account");
+        heading.setForeground(labelFg);
+        heading.setFont(Theme.fontBold(20));
+        JLabel sub = new JLabel("Fill in the details below");
+        sub.setForeground(Theme.TEXT_SECONDARY);
+        sub.setFont(Theme.fontRegular(13));
+        header.add(heading);
+        header.add(Box.createVerticalStrut(4));
+        header.add(sub);
+
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setOpaque(true);
+        card.setBackground(new Color(16, 20, 40, 230));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(255, 255, 255, 30), 1),
+                BorderFactory.createEmptyBorder(16, 16, 16, 16)
+        ));
+
+        GridBagConstraints gc = new GridBagConstraints();
+        gc.gridx = 0; gc.gridy = 0;
+        gc.anchor = GridBagConstraints.WEST;
+        gc.insets = new Insets(8, 6, 4, 12);
+        gc.fill = GridBagConstraints.HORIZONTAL;
+
+        addFieldRow(card, gc, "Username", userField, labelFg);
+        addFieldRow(card, gc, "Password", passField, labelFg);
+        addFieldRow(card, gc, "Full name", nameField, labelFg);
+        addFieldRow(card, gc, "Email", emailField, labelFg);
+        addFieldRow(card, gc, "Address", addressField, labelFg);
+        addFieldRow(card, gc, "Phone", phoneField, labelFg);
+
+        root.add(header, BorderLayout.NORTH);
+        root.add(card, BorderLayout.CENTER);
+
+        int res = JOptionPane.showConfirmDialog(
+                SwingUtilities.getWindowAncestor(this),
+                root,
+                "Create Account",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+        if (res != JOptionPane.OK_OPTION) return;
+
+        String user = userField.getText().trim();
+        String pass = new String(passField.getPassword()).trim();
+        String name = nameField.getText().trim();
+        String email = emailField.getText().trim();
+        String address = addressField.getText().trim();
+        String phone = phoneField.getText().trim();
+
+        if (user.isEmpty() || pass.isEmpty() || name.isEmpty() || email.isEmpty() || address.isEmpty() || phone.isEmpty()) {
+            statusLabel.setText("Please fill in all fields.");
+            return;
+        }
+
+        try {
+            boolean created = backend.BackendService.createMember(user, pass, name, email, address, phone);
+            if (created) {
+                statusLabel.setText("Account created. Please log in.");
+                username.setText(user);
+                password.setText("");
+                password.requestFocusInWindow();
+            } else {
+                statusLabel.setText("Registration failed. Try a different username.");
+            }
+        } catch (Exception ex) {
+            statusLabel.setText("Registration error. Check console.");
+            ex.printStackTrace();
         }
     }
 
@@ -243,6 +337,26 @@ public class LoginFrame extends JPanel {
                 ));
             }
         });
+    }
+
+    // Add a labeled row to the register dialog
+    private void addFieldRow(JPanel panel, GridBagConstraints gc, String label, JComponent field, Color labelColor) {
+        JLabel l = new JLabel(label);
+        l.setForeground(labelColor);
+        l.setFont(Theme.fontRegular(12));
+        gc.gridx = 0;
+        gc.weightx = 0;
+        gc.insets = new Insets(6, 4, 2, 10);
+        panel.add(l, gc);
+
+        gc.gridx = 1;
+        gc.weightx = 1.0;
+        gc.insets = new Insets(6, 4, 2, 4);
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(field, gc);
+        gc.gridy++;
+        gc.fill = GridBagConstraints.NONE;
+        gc.weightx = 0;
     }
 
     // ===== Inner class that draws the yellow ticket + soft spotlight =====
