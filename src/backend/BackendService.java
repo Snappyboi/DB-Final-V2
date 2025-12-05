@@ -100,4 +100,9 @@ public class BackendService {
 
     // Session/active helpers
     public static boolean isMemberActive(String username) { return userDAO.isMemberActiveByUsername(username); }
+
+    //decrements active flag when user logs out
+    public static void logout(int member_id){
+        queryDAO.logout(member_id);
+    }
 }

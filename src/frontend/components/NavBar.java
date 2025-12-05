@@ -1,5 +1,6 @@
 package frontend.components;
 
+import backend.BackendService;
 import frontend.Navigation;
 
 import javax.swing.*;
@@ -47,7 +48,7 @@ public class NavBar extends JPanel {
         browse.addActionListener(e -> nav.showBrowseSearch());
         history.addActionListener(e -> nav.showWatchHistory());
         account.addActionListener(e -> nav.showAccount());
-        logout.addActionListener(e -> nav.logout());
+        logout.addActionListener(e -> nav.logout(BackendService.getMemberIdByUsername(nav.getCurrentUsername())));
 
         rightFlow.add(browse);
         rightFlow.add(history);
