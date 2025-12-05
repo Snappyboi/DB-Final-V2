@@ -8,7 +8,7 @@ import frontend.components.SurfacePanel;
 import javax.swing.*;
 import java.awt.*;
 
-// Admin add member page (Step 2) after adding person (doesnt work)
+// Admin add member page (Step 2) after adding perso
 public class AdminAddMemberPage extends JPanel {
     private final Navigation nav;
     private JTextField usernameField, passwordField, nameField, emailField, addressField, phoneField;
@@ -97,20 +97,62 @@ public class AdminAddMemberPage extends JPanel {
     }
 
     private void submit() {
-        String u = val(usernameField), p = val(passwordField), n = val(nameField), e = val(emailField), a = val(addressField), ph = val(phoneField);
+        String u  = val(usernameField);
+        String p  = val(passwordField);
+        String n  = val(nameField);
+        String e  = val(emailField);
+        String a  = val(addressField);
+        String ph = val(phoneField);
+
+        // Get selected subscription plan
         String sub = (String) subLevelBox.getSelectedItem();
-        if (u.isEmpty() || p.isEmpty()) { JOptionPane.showMessageDialog(this, "Username and password required."); return; }
-        boolean ok;
-        if (personId != null) {
-            ok = backend.BackendService.createMemberUsingPerson(personId, u, p, n, e, a, ph, sub, false);
-        } else {
-            ok = backend.BackendService.createMemberFull(u, p, n, e, a, ph, sub, false);
+
+        if (u.isEmpty() || p.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Username and password required.");
+            return;
         }
+
+        //  Convert "-" into ("Basic") Plan
+        if (sub == null || sub.equals("-") || sub.trim().isEmpty()) {
+            sub = "Basic";
+        }
+
+        // New members should start active
+        boolean active = true;
+
+        boolean ok;
+
+        // If step 1 (AdminAddPersonPage) created a Person row
+        if (personId != null) {
+            ok = backend.BackendService.createMemberUsingPerson(
+                    personId,
+                    u, p, n, e, a, ph,
+                    sub,          // subscription that will go into Subscribes table
+                    active
+            );
+        }
+        // Or admin did a one step add without makiing person
+        else {
+            ok = backend.BackendService.createMemberFull(
+                    u, p, n, e, a, ph,
+                    sub,          // subscription here too
+                    active
+            );
+        }
+
         if (ok) {
             JOptionPane.showMessageDialog(this, "Member added.");
-            usernameField.setText(""); passwordField.setText(""); nameField.setText(""); emailField.setText(""); addressField.setText(""); phoneField.setText("");
+
+            // Reset fields
+            usernameField.setText("");
+            passwordField.setText("");
+            nameField.setText("");
+            emailField.setText("");
+            addressField.setText("");
+            phoneField.setText("");
             subLevelBox.setSelectedIndex(0);
-            // Go to subscriptions and reload
+
+            // Navigate to the subscriptions list
             if (nav instanceof frontend.app) {
                 ((frontend.app) nav).showAdminSubscriptions();
             }

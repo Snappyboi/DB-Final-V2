@@ -199,6 +199,21 @@ private void showRegisterDialog() {
         JTextField emailField = new JTextField(18);
         JTextField addressField = new JTextField(18);
         JTextField phoneField = new JTextField(18);
+        // Subscription options
+        JRadioButton basicBtn = new JRadioButton("Basic");
+        JRadioButton premiumBtn = new JRadioButton("Premium");
+        ButtonGroup subGroup = new ButtonGroup();
+        subGroup.add(basicBtn);
+        subGroup.add(premiumBtn);
+        basicBtn.setSelected(true);
+        basicBtn.setOpaque(false);
+        premiumBtn.setOpaque(false);
+        basicBtn.setForeground(labelFg);
+        premiumBtn.setForeground(labelFg);
+        JPanel subPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        subPanel.setOpaque(false);
+        subPanel.add(basicBtn);
+        subPanel.add(premiumBtn);
 
         stylizeField(userField);
         stylizeField(passField);
@@ -210,7 +225,7 @@ private void showRegisterDialog() {
         GradientBackgroundPanel root = new GradientBackgroundPanel(new BorderLayout());
         root.setOpaque(false);
         root.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
-        root.setPreferredSize(new Dimension(520, 480));
+        root.setPreferredSize(new Dimension(520, 520));
 
         JPanel header = new JPanel();
         header.setOpaque(false);
@@ -246,6 +261,7 @@ private void showRegisterDialog() {
         addFieldRow(card, gc, "Email", emailField, labelFg);
         addFieldRow(card, gc, "Address", addressField, labelFg);
         addFieldRow(card, gc, "Phone", phoneField, labelFg);
+        addFieldRow(card, gc, "Subscription", subPanel, labelFg);
 
         root.add(header, BorderLayout.NORTH);
         root.add(card, BorderLayout.CENTER);
@@ -272,7 +288,9 @@ private void showRegisterDialog() {
         }
 
         try {
-            boolean created = backend.BackendService.createMember(user, pass, name, email, address, phone);
+            String subscription = premiumBtn.isSelected() ? "Premium" : "Basic";
+            boolean created = backend.BackendService.createMemberFull(
+                    user, pass, name, email, address, phone, subscription, true);
             if (created) {
                 statusLabel.setText("Account created. Please log in.");
                 username.setText(user);

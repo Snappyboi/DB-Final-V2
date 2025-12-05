@@ -90,12 +90,14 @@ public class BackendService {
     public static Integer createPerson(String name, String email, String address, String phone) {
         return userDAO.createPerson(name, email, address, phone);
     }
+
     public static boolean createMemberUsingPerson(Integer personId,
                                                   String username, String password,
                                                   String name, String email, String address, String phone,
                                                   String subscriptionLevel, boolean active) {
         return userDAO.createMemberUsingPerson(personId, username, password, name, email, address, phone, subscriptionLevel, active);
     }
+
     //add media to session upon stream
     public static void addMediaToSession(int member_id, String media_id) throws Exception { queryDAO.addMediaToSession(member_id, media_id); }
 
@@ -109,9 +111,11 @@ public class BackendService {
     public static void logout(int member_id){
         queryDAO.logout(member_id);
     }
+
     public static void getNewMedia(){
         queryDAO.getNewMedia();
     }
+
     public static boolean updateMemberProfile(String currentUsername,
                                               String newUsername,
                                               String name,

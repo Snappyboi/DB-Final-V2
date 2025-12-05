@@ -318,6 +318,34 @@ public class UserDAO {
                 ps.executeUpdate();
             }
 
+            // 2) Insert into Subscribes table so the member has a recorded subscription
+            String chosenLevel = (subscriptionLevel == null || subscriptionLevel.isBlank() || "-".equals(subscriptionLevel))
+                    ? "Basic" : subscriptionLevel;
+
+            // Detect actual column name for subscription value in Subscribes
+            String levelCol = null;
+            if (hasColumn(conn, "Subscribes", "Subscription_level")) levelCol = "Subscription_level";
+            else if (hasColumn(conn, "Subscribes", "subscription_level")) levelCol = "subscription_level";
+            else if (hasColumn(conn, "Subscribes", "subscription_number")) levelCol = "subscription_number";
+
+            if (levelCol != null) {
+                String sqlSub = "INSERT INTO Subscribes(ID, " + levelCol + ") VALUES (?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlSub)) {
+                    ps.setInt(1, personId);
+                    ps.setString(2, chosenLevel);
+                    ps.executeUpdate();
+                }
+            } else {
+                // Fallback: at least create a row tied to the member ID
+                try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Subscribes(ID) VALUES (?)")) {
+                    ps.setInt(1, personId);
+                    ps.executeUpdate();
+                } catch (SQLException ignored) {
+                    // If schema requires a subscription column, this will fail; transaction will roll back below
+                    throw ignored;
+                }
+            }
+
             conn.commit();
             return true;
         } catch (SQLException e) {
@@ -381,6 +409,19 @@ public class UserDAO {
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Watch_History WHERE member_id = ?")) {
                 ps.setInt(1, id);
                 ps.executeUpdate();
+            }
+            // Also remove any active/inactive stream sessions tied to this member to satisfy FK constraints
+            try {
+                String memberCol = getStreamSessionMemberIdColumn(conn);
+                if (memberCol != null) {
+                    String sql = "DELETE FROM Stream_session WHERE " + memberCol + " = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setInt(1, id);
+                        ps.executeUpdate();
+                    }
+                }
+            } catch (SQLException ignored) {
+                // If table/column doesn't exist, skip silently
             }
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Member WHERE ID = ?")) {
                 ps.setInt(1, id);

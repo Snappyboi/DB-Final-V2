@@ -526,6 +526,25 @@ public class QueryDAO {
                 """;
     }
 
+    public int countActiveSessionsForMember(int memberId) {
+        String sql = "SELECT COUNT(*) FROM Stream_Session " +
+                "WHERE member_id = ? AND is_active = 1";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, memberId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 
 
     private void deleteIfExists(Connection conn, String sql, String... args) throws SQLException {
