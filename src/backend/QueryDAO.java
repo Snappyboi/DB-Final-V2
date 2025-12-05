@@ -460,15 +460,32 @@ public class QueryDAO {
             e.printStackTrace();
         }
     }
+    public void loginToSession(int member_id) throws SQLException {
+        String sql = """
+        INSERT INTO Stream_session(session_ID, member_id, login_time)
+        SELECT MAX_ID + 1, ?, NOW()
+        FROM (SELECT MAX(session_ID) AS MAX_ID FROM Stream_session) AS temp
+    """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, member_id);
+            ps.executeUpdate();
+        }
+    }
+
     public void logout(int member_id){
         String sql = """
-            UPDATE Stream_session SET active_flag = active_flag-1
-            WHERE member_id = ?;
+            UPDATE Stream_session SET active_flag = 0, logout_time = NOW()
+            WHERE member_id = ?
+            AND active_flag = 1;
         """;
         try(Connection conn = DBConnection.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql)){
             ps.setInt(1,member_id);
             ps.executeUpdate();
+
+
 
         }
         catch (SQLException e) {
