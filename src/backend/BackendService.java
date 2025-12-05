@@ -108,4 +108,36 @@ public class BackendService {
     public static void getNewMedia(){
         queryDAO.getNewMedia();
     }
+    public static boolean updateMemberProfile(String currentUsername,
+                                              String newUsername,
+                                              String name,
+                                              String email,
+                                              String address,
+                                              String phone,
+                                              String newPassword) {
+        return userDAO.updateMemberProfile(currentUsername,
+                newUsername,
+                name,
+                email,
+                address,
+                phone,
+                newPassword);
+    }
+
+    // 🔹 NEW: Update Admin profile (wrapper for UserDAO.updateAdminProfile)
+    public static boolean updateAdminProfile(String currentAdminUsername,
+                                             String newUsername,
+                                             String name,
+                                             String email,
+                                             String address,
+                                             String phone,
+                                             String newPassword) {
+        return userDAO.updateAdminProfile(currentAdminUsername,
+                newUsername,
+                name,
+                email,
+                address,
+                phone,
+                newPassword);
+    }
 }
