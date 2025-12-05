@@ -8,7 +8,7 @@ public interface Navigation {
     void showAccount();
     void showWatchHistory();
     void showBrowseSearch();
-    void logout();
+    void logout(int member_id);
 
     // Track current logged-in username
     void setCurrentUsername(String username);
