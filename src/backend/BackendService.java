@@ -84,6 +84,8 @@ public class BackendService {
                                                   String subscriptionLevel, boolean active) {
         return userDAO.createMemberUsingPerson(personId, username, password, name, email, address, phone, subscriptionLevel, active);
     }
+    //add media to session upon stream
+    public static void addMediaToSession(int member_id, String media_id) throws Exception { queryDAO.addMediaToSession(member_id, media_id); }
 
     // Admin: admin personal info
     public static java.util.Map<String, String> getAdminAccountInfo(String adminUsername) { return userDAO.getAdminAccountInfo(adminUsername); }
