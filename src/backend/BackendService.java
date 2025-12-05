@@ -97,4 +97,7 @@ public class BackendService {
     public static void logout(int member_id){
         queryDAO.logout(member_id);
     }
+    public static void getNewMedia(){
+        queryDAO.getNewMedia();
+    }
 }
