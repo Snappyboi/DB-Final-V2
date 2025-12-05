@@ -1,5 +1,4 @@
 package backend;
-import backend.Media;
 import java.sql.*;
 import java.util.*;
 import java.util.ArrayList;
@@ -475,6 +474,14 @@ public class QueryDAO {
         catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    public void getNewMedia(){
+        String sql = """
+                SELECT media_ID, title, genre, release_date, IMBD_link
+                FROM Media
+                WHERE release_date >= CURDATE() - INTERVAL 2 MONTH
+                ORDER BY release_date DESC;
+                """;
     }
 
 
