@@ -6,6 +6,7 @@ import frontend.components.NavBar;
 import frontend.components.RoundedButton;
 import frontend.components.SurfacePanel;
 import frontend.components.TableStyler;
+import frontend.components.AdminTableRenderers;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -43,6 +44,8 @@ public class AdminSubscriptionsPage extends JPanel {
         };
         table = new JTable(model);
         TableStyler.applyAdminStyle(table);
+        table.getColumnModel().getColumn(0).setCellRenderer(AdminTableRenderers.avatarWithNameRenderer());
+        table.getColumnModel().getColumn(1).setCellRenderer(AdminTableRenderers.avatarWithNameRenderer());
 
         // open member detail when double-click on a row
         table.addMouseListener(new java.awt.event.MouseAdapter() {

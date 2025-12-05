@@ -16,11 +16,7 @@ public class NavBar extends JPanel {
         int vPad = 0;
         setBorder(BorderFactory.createEmptyBorder(vPad, 24, vPad, 24));
 
-        JLabel streaming = new JLabel("Streaming");
-        streaming.setForeground(Theme.ACCENT_GOLD);
-        streaming.setFont(Theme.fontBold(24));
-
-        int targetH = Math.max(16, NAV_HEIGHT - (vPad * 2));
+        int targetH = Math.max(16, NAV_HEIGHT - (vPad * 2)) + 10;
 
         JLabel logo = new JLabel();
         logo.setOpaque(false);
@@ -30,8 +26,6 @@ public class NavBar extends JPanel {
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         left.setOpaque(false);
         left.add(logo);
-        streaming.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
-        left.add(streaming);
 
         MouseAdapter homeClick = new MouseAdapter() {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) { nav.showMemberHome(); }
@@ -39,7 +33,6 @@ public class NavBar extends JPanel {
             @Override public void mouseExited(java.awt.event.MouseEvent e) { setCursor(Cursor.getDefaultCursor()); }
         };
         logo.addMouseListener(homeClick);
-        streaming.addMouseListener(homeClick);
 
         JPanel rightFlow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         rightFlow.setOpaque(false);
@@ -48,7 +41,9 @@ public class NavBar extends JPanel {
         RoundedButton browse = new RoundedButton("Browse").gold();
         RoundedButton history = new RoundedButton("My Watch History").gold();
         RoundedButton account = new RoundedButton("Account Info").gold();
-        RoundedButton logout = new RoundedButton("Logout").red();
+        RoundedButton logout = new RoundedButton("Logout");
+        logout.setBackground(new Color(180, 80, 80));
+        logout.setForeground(Color.WHITE);
 
         browse.addActionListener(e -> nav.showBrowseSearch());
         history.addActionListener(e -> nav.showWatchHistory());

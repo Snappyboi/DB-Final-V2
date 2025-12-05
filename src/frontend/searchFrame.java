@@ -115,8 +115,19 @@ public class searchFrame extends JPanel {
                     String t = m.getTitle();
                     Image img = ImageUtils.loadPosterImageForTitle(t, 160, 240);
                     ThumbnailCard card = new ThumbnailCard(t, img);
+                    JLabel titleLabel = new JLabel(t);
+                    titleLabel.setForeground(Theme.TEXT_PRIMARY);
+                    titleLabel.setFont(Theme.fontRegular(13));
+                    titleLabel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
+
+                    JPanel wrapper = new JPanel();
+                    wrapper.setLayout(new BorderLayout());
+                    wrapper.setOpaque(false);
+                    wrapper.add(card, BorderLayout.CENTER);
+                    wrapper.add(titleLabel, BorderLayout.SOUTH);
+
                     card.setOnClick(() -> nav.showMediaDetails(t));
-                    resultsPanel.add(card);
+                    resultsPanel.add(wrapper);
                 }
             }
         } catch (Exception ex) {

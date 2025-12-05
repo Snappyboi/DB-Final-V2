@@ -1,10 +1,9 @@
 package frontend;
 
+import frontend.components.GradientBackgroundPanel;
+
 import javax.swing.*;
 import java.awt.*;
-
-import frontend.*;
-import frontend.components.GradientBackgroundPanel;
 
 // ACED Streaming UI entry point
 public class app implements Navigation, AdminAware {
@@ -59,7 +58,7 @@ public class app implements Navigation, AdminAware {
         cards = new CardLayout();
         root = new GradientBackgroundPanel(cards);
 
-        // Instantiate pages (now under frontend.*)
+        // Instantiate pages
         loginPage = new LoginFrame(this);
         memberPage = new MemberHomePage(this);
         adminPage = new frontend.admin.AdminHomePage(this);

@@ -6,6 +6,7 @@ import frontend.components.NavBar;
 import frontend.components.TableStyler;
 import frontend.components.SurfacePanel;
 import frontend.components.RoundedButton;
+import frontend.components.AdminTableRenderers;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,6 +50,8 @@ public class AdminMemberStreaming extends JPanel {
         };
         table = new JTable(model);
         TableStyler.applyAdminStyle(table);
+        table.getColumnModel().getColumn(0).setCellRenderer(AdminTableRenderers.avatarWithNameRenderer());
+        table.getColumnModel().getColumn(1).setCellRenderer(AdminTableRenderers.posterWithTitleRenderer());
 
         // Open member detail on double-click
         table.addMouseListener(new java.awt.event.MouseAdapter() {

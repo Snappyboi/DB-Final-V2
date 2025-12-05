@@ -7,6 +7,7 @@ import frontend.components.NavBar;
 import frontend.components.RoundedButton;
 import frontend.components.SurfacePanel;
 import frontend.components.TableStyler;
+import frontend.components.AdminTableRenderers;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -70,6 +71,7 @@ public class AdminMemberDetailPage extends JPanel {
         DefaultTableModel model = new DefaultTableModel(cols, 0) { @Override public boolean isCellEditable(int r,int c){ return false; } };
         historyTable = new JTable(model);
         TableStyler.applyAdminStyle(historyTable);
+        historyTable.getColumnModel().getColumn(0).setCellRenderer(AdminTableRenderers.posterWithTitleRenderer());
 
         SurfacePanel historyCard = new SurfacePanel();
         historyCard.setBackground(AdminTheme.SURFACE_ELEVATED);
