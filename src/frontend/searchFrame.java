@@ -20,7 +20,7 @@ public class searchFrame extends JPanel {
     public searchFrame(Navigation nav) {
         this.nav = nav;
         setLayout(new BorderLayout());
-        setBackground(Theme.BACKGROUND);
+        setOpaque(false);
 
         // Top bar with nav + search row
         JPanel top = new JPanel(new BorderLayout());
@@ -70,8 +70,8 @@ public class searchFrame extends JPanel {
 
         JScrollPane scroll = new JScrollPane(resultsPanel);
         scroll.setBorder(null);
-        scroll.setBackground(Theme.BACKGROUND);
-        scroll.getViewport().setBackground(Theme.BACKGROUND);
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         add(scroll, BorderLayout.CENTER);
     }

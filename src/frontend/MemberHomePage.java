@@ -21,7 +21,7 @@ public class MemberHomePage extends JPanel {
     public MemberHomePage(Navigation nav) {
         this.nav = nav;
         setLayout(new BorderLayout());
-        setBackground(Theme.BACKGROUND);
+        setOpaque(false);
 
         add(new NavBar(nav, true), BorderLayout.NORTH);
 
@@ -44,8 +44,8 @@ public class MemberHomePage extends JPanel {
         // Page scroll
         JScrollPane scroll = new JScrollPane(content, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setBorder(null);
-        scroll.setBackground(Theme.BACKGROUND);
-        scroll.getViewport().setBackground(Theme.BACKGROUND);
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
         scroll.getVerticalScrollBar().setUnitIncrement(24);
 
 
