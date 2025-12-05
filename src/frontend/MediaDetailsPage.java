@@ -28,7 +28,7 @@ public class MediaDetailsPage extends JPanel {
     public MediaDetailsPage(Navigation nav) {
         this.nav = nav;
         setLayout(new BorderLayout());
-        setBackground(Theme.BACKGROUND);
+        setOpaque(false);
 
         add(new NavBar(nav, true), BorderLayout.NORTH);
 

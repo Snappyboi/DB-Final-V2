@@ -12,7 +12,7 @@ public class NavBar extends JPanel {
     private static final int NAV_HEIGHT = 60;
     public NavBar(Navigation nav, boolean showAdmin) {
         setLayout(new BorderLayout());
-        setBackground(Theme.SURFACE);
+        setBackground(new Color(12, 18, 46));
         int vPad = 0;
         setBorder(BorderFactory.createEmptyBorder(vPad, 24, vPad, 24));
 
@@ -46,8 +46,8 @@ public class NavBar extends JPanel {
         rightFlow.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
 
         RoundedButton browse = new RoundedButton("Browse").gold();
-        RoundedButton history = new RoundedButton("My Watch History");
-        RoundedButton account = new RoundedButton("Account Info");
+        RoundedButton history = new RoundedButton("My Watch History").gold();
+        RoundedButton account = new RoundedButton("Account Info").gold();
         RoundedButton logout = new RoundedButton("Logout").red();
 
         browse.addActionListener(e -> nav.showBrowseSearch());

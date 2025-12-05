@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 import frontend.*;
+import frontend.components.GradientBackgroundPanel;
 
 // ACED Streaming UI entry point
 public class app implements Navigation, AdminAware {
@@ -56,8 +57,7 @@ public class app implements Navigation, AdminAware {
         frame.setMinimumSize(new Dimension(1100, 700));
 
         cards = new CardLayout();
-        root = new JPanel(cards);
-        root.setBackground(Theme.BACKGROUND);
+        root = new GradientBackgroundPanel(cards);
 
         // Instantiate pages (now under frontend.*)
         loginPage = new LoginFrame(this);
