@@ -116,14 +116,11 @@ public class MemberHomePage extends JPanel {
         row.setOpaque(false);
 
         for (String f : files) {
-            String path = "/MoviePosters/" + f;
-            JLabel poster = ImageUtils.createPosterLabel(path);
             String titleFromFile = stripExtension(f);
-            poster.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            poster.addMouseListener(new MouseAdapter() {
-                @Override public void mouseClicked(MouseEvent e) { nav.showMediaDetails(titleFromFile); }
-            });
-            row.add(poster);
+            Image img = ImageUtils.loadPosterImage("/MoviePosters/" + f, 160, 240);
+            ThumbnailCard card = new ThumbnailCard(titleFromFile, img);
+            card.setOnClick(() -> nav.showMediaDetails(titleFromFile));
+            row.add(card);
         }
 
         JScrollPane rowScroll = buildRowScroll(row, visibleCount);
