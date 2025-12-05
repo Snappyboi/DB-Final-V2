@@ -124,7 +124,6 @@ public class BackendService {
                 newPassword);
     }
 
-    // 🔹 NEW: Update Admin profile (wrapper for UserDAO.updateAdminProfile)
     public static boolean updateAdminProfile(String currentAdminUsername,
                                              String newUsername,
                                              String name,

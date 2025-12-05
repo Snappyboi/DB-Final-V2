@@ -390,12 +390,15 @@ public class QueryDAO {
         return rows;
     }
 
-    // --- Admin CRUD: Media ---
+    //  Admin Add media
     public String createMedia(String title, String genre, String releaseDate, String type, String imdbLink) throws SQLException {
         String mediaId = nextMediaId(type);
         String insertMedia = "INSERT INTO Media(media_ID, title, genre, release_date, IMBD_link) VALUES (?, ?, ?, ?, ?)";
+
         try (Connection conn = DBConnection.getConnection()) {
             conn.setAutoCommit(false);
+
+            // 1) Insert into Media
             try (PreparedStatement ps = conn.prepareStatement(insertMedia)) {
                 ps.setString(1, mediaId);
                 ps.setString(2, title);
@@ -404,14 +407,31 @@ public class QueryDAO {
                 ps.setString(5, imdbLink);
                 ps.executeUpdate();
             }
-            String table = "Movie".equalsIgnoreCase(type) ? "Movie" : "Series";
-            String insertType = "INSERT INTO " + table + "(media_ID) VALUES (?)";
-            try (PreparedStatement ps = conn.prepareStatement(insertType)) {
-                ps.setString(1, mediaId);
-                ps.executeUpdate();
+
+            // 2) Insert into Movie or Series with the same basic fields
+            if ("Movie".equalsIgnoreCase(type)) {
+                String insertMovie = "INSERT INTO Movie(media_ID, title, release_date, genre) VALUES (?, ?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(insertMovie)) {
+                    ps.setString(1, mediaId);
+                    ps.setString(2, title);
+                    ps.setString(3, releaseDate);
+                    ps.setString(4, genre);
+                    ps.executeUpdate();
+                }
+            } else { // treat anything else as Series
+                String insertSeries = "INSERT INTO Series(media_ID, title, release_date, genre) VALUES (?, ?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(insertSeries)) {
+                    ps.setString(1, mediaId);
+                    ps.setString(2, title);
+                    ps.setString(3, releaseDate);
+                    ps.setString(4, genre);
+                    ps.executeUpdate();
+                }
             }
+
             conn.commit();
         }
+
         return mediaId;
     }
 
