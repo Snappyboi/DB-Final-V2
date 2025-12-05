@@ -455,11 +455,28 @@ public class QueryDAO {
         PreparedStatement ps = conn.prepareStatement(sql)){
             ps.setInt(1,member_id);
             ps.setString(2,media_id);
+            ps.executeUpdate();
         }
         catch (SQLException e) {
             e.printStackTrace();
         }
     }
+    public void logout(int member_id){
+        String sql = """
+            UPDATE Stream_session SET active_flag = active_flag-1
+            WHERE member_id = ?;
+        """;
+        try(Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1,member_id);
+            ps.executeUpdate();
+
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private void deleteIfExists(Connection conn, String sql, String... args) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
