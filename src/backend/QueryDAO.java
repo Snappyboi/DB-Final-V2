@@ -475,22 +475,7 @@ public class QueryDAO {
             e.printStackTrace();
         }
     }
-    public void getNewMedia(){
-        String sql = """
-                SELECT media_ID, title, genre, release_date, IMBD_link
-                FROM Media
-                WHERE release_date >= CURDATE() - INTERVAL 2 MONTH
-                ORDER BY release_date DESC;
-                """;
-        try(Connection conn = DBConnection.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)){
-            ps.executeUpdate();
 
-        }
-        catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 
 
     private void deleteIfExists(Connection conn, String sql, String... args) throws SQLException {
