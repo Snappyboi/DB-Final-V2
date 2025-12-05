@@ -466,18 +466,23 @@ public class QueryDAO {
         }
     }
 
-    public void addMediaToSession(int member_id, String media_id){
+    public void addMediaToSession(int member_id, String media_id) throws SQLException {
         String sql = """
-                INSERT INTO Stream_session(member_id, media_id) VALUES (?, ?)
-                """;
-        try(Connection conn = DBConnection.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)){
-            ps.setInt(1,member_id);
-            ps.setString(2,media_id);
-            ps.executeUpdate();
-        }
-        catch (SQLException e) {
-            e.printStackTrace();
+        UPDATE Stream_session
+        SET media_id = ?
+        WHERE member_id = ? AND active_flag = 1
+    """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, media_id);
+            ps.setInt(2, member_id);
+            int rowsUpdated = ps.executeUpdate();
+
+            if (rowsUpdated == 0) {
+                System.out.println("No active session found for this member.");
+                // Optional: handle the case where there is no active session
+            }
         }
     }
     public void loginToSession(int member_id) throws SQLException {
@@ -520,6 +525,7 @@ public class QueryDAO {
                 ORDER BY release_date DESC;
                 """;
     }
+
 
 
     private void deleteIfExists(Connection conn, String sql, String... args) throws SQLException {

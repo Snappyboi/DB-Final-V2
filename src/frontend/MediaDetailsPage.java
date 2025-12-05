@@ -123,7 +123,13 @@ public class MediaDetailsPage extends JPanel {
                 // Insert into Watch_History
                 BackendService.addMediaToWatchHistory(memberId, media.getMediaIdRaw());
                 //add media id to stream session
-                BackendService.addMediaToSession(memberId, media.getMediaIdRaw());
+                try{
+                    BackendService.addMediaToSession(memberId, media.getMediaIdRaw());
+                }catch(Exception ex){
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Unable to add media to session", "ACED", JOptionPane.INFORMATION_MESSAGE);
+                }
+
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Unable to add media to watch history", "ACED", JOptionPane.WARNING_MESSAGE);
             }
