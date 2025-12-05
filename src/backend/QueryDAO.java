@@ -482,6 +482,14 @@ public class QueryDAO {
                 WHERE release_date >= CURDATE() - INTERVAL 2 MONTH
                 ORDER BY release_date DESC;
                 """;
+        try(Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.executeUpdate();
+
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 
