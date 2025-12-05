@@ -92,4 +92,25 @@ public class BackendService {
 
     // Session/active helpers
     public static boolean isMemberActive(String username) { return userDAO.isMemberActiveByUsername(username); }
+
+    // Profile updates
+    public static boolean updateMemberProfile(String currentUsername,
+                                              String newUsername,
+                                              String name,
+                                              String email,
+                                              String address,
+                                              String phone,
+                                              String newPassword) {
+        return userDAO.updateMemberProfile(currentUsername, newUsername, name, email, address, phone, newPassword);
+    }
+
+    public static boolean updateAdminProfile(String currentAdminUsername,
+                                             String newUsername,
+                                             String name,
+                                             String email,
+                                             String address,
+                                             String phone,
+                                             String newPassword) {
+        return userDAO.updateAdminProfile(currentAdminUsername, newUsername, name, email, address, phone, newPassword);
+    }
 }

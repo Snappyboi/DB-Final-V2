@@ -414,6 +414,310 @@ public class UserDAO {
                 subscriptionLevel, active);
     }
 
+    // Check if a username is already used by ANY Member or Admin.
+    private boolean usernameExists(Connection conn, String username, Integer excludeMemberId) throws SQLException {
+
+        // 1) Check Admin table
+        try (PreparedStatement ps = conn.prepareStatement(
+                "SELECT COUNT(*) AS cnt FROM Admin WHERE admin_username = ?")) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt("cnt") > 0) {
+                    return true; // admin already has this username
+                }
+            }
+        }
+
+        // 2) Check Member table
+        if (excludeMemberId == null) {
+            // Used for add / admin update
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT COUNT(*) AS cnt FROM Member WHERE username = ?")) {
+                ps.setString(1, username);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next() && rs.getInt("cnt") > 0) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            // Used for member profile update
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT COUNT(*) AS cnt FROM Member WHERE username = ? AND ID <> ?")) {
+                ps.setString(1, username);
+                ps.setInt(2, excludeMemberId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next() && rs.getInt("cnt") > 0) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // Update Member profile
+    public boolean updateMemberProfile(String currentUsername,
+                                       String newUsername,
+                                       String name,
+                                       String email,
+                                       String address,
+                                       String phone,
+                                       String newPassword) {
+        if (currentUsername == null || currentUsername.isEmpty()) return false;
+
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            // 1) Find current member ID
+            Integer currentId = null;
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT ID FROM Member WHERE username = ?")) {
+                ps.setString(1, currentUsername);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        currentId = rs.getInt(1);
+                    }
+                }
+            }
+            if (currentId == null) {
+                conn.rollback();
+                return false;
+            }
+
+            // 2) If username is changing, make sure it's not taken by ANY member/admin
+            if (newUsername != null && !newUsername.isEmpty() && !newUsername.equals(currentUsername)) {
+                if (usernameExists(conn, newUsername, currentId)) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            // 3) Detect name and phone column
+            boolean hasMemberNameCol = hasColumn(conn, "Member", "member_name");
+            boolean hasNameCol       = hasColumn(conn, "Member", "name");
+            boolean hasPhoneNumCol   = hasColumn(conn, "Member", "phone_number");
+            boolean hasPhoneCol      = hasColumn(conn, "Member", "phone");
+
+            String nameCol = hasMemberNameCol ? "member_name"
+                    : (hasNameCol ? "name" : null);
+
+            String phoneCol = hasPhoneNumCol ? "phone_number"
+                    : (hasPhoneCol ? "phone" : null);
+
+            // 4) Build UPDATE Member
+            StringBuilder sql = new StringBuilder("UPDATE Member SET ");
+            java.util.List<Object> params = new java.util.ArrayList<>();
+            boolean first = true;
+
+            if (newUsername != null && !newUsername.isEmpty()) {
+                sql.append("username = ?");
+                params.add(newUsername);
+                first = false;
+            }
+
+            if (newPassword != null && !newPassword.isEmpty()) {
+                if (!first) sql.append(", ");
+                sql.append("password = ?");
+                params.add(newPassword);
+                first = false;
+            }
+
+            if (nameCol != null && name != null) {
+                if (!first) sql.append(", ");
+                sql.append(nameCol).append(" = ?");
+                params.add(name);
+                first = false;
+            }
+
+            if (email != null) {
+                if (!first) sql.append(", ");
+                sql.append("email = ?");
+                params.add(email);
+                first = false;
+            }
+
+            if (address != null) {
+                if (!first) sql.append(", ");
+                sql.append("address = ?");
+                params.add(address);
+                first = false;
+            }
+
+            if (phoneCol != null && phone != null) {
+                if (!first) sql.append(", ");
+                sql.append(phoneCol).append(" = ?");
+                params.add(phone);
+                first = false;
+            }
+
+            // Nothing to update
+            if (first) {
+                conn.rollback();
+                return false;
+            }
+
+            sql.append(" WHERE ID = ?");
+            params.add(currentId);
+
+            // 5) Runs UPDATE Member
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                int i = 1;
+                for (Object p : params) {
+                    if (p instanceof String) {
+                        ps.setString(i++, (String) p);
+                    } else if (p instanceof Integer) {
+                        ps.setInt(i++, (Integer) p);
+                    } else {
+                        ps.setObject(i++, p);
+                    }
+                }
+                ps.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
+            return false;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
+            }
+        }
+    }
+
+    // Update Admin profile
+    public boolean updateAdminProfile(String currentAdminUsername,
+                                      String newUsername,
+                                      String name,
+                                      String email,
+                                      String address,
+                                      String phone,
+                                      String newPassword) {
+        if (currentAdminUsername == null || currentAdminUsername.isEmpty()) return false;
+
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            // 1) If username is changing, make sure it's not taken by ANY member/admin
+            if (newUsername != null && !newUsername.isEmpty() && !newUsername.equals(currentAdminUsername)) {
+                if (usernameExists(conn, newUsername, null)) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            // 2) Detect possible column names for Admin table
+            boolean hasAdminNameCol  = hasColumn(conn, "Admin", "admin_name");
+            boolean hasNameCol       = hasColumn(conn, "Admin", "name");
+            boolean hasAdminPassCol  = hasColumn(conn, "Admin", "admin_password");
+            boolean hasPassCol       = hasColumn(conn, "Admin", "password");
+            boolean hasPhoneNumCol   = hasColumn(conn, "Admin", "phone_number");
+            boolean hasPhoneCol      = hasColumn(conn, "Admin", "phone");
+
+            String nameCol = hasAdminNameCol ? "admin_name"
+                    : (hasNameCol ? "name" : null);
+
+            String passCol = hasAdminPassCol ? "admin_password"
+                    : (hasPassCol ? "password" : null);
+
+            String phoneCol = hasPhoneNumCol ? "phone_number"
+                    : (hasPhoneCol ? "phone" : null);
+
+            // 3) Build UPDATE Admin SET
+            StringBuilder sql = new StringBuilder("UPDATE Admin SET ");
+            java.util.List<Object> params = new java.util.ArrayList<>();
+            boolean first = true;
+
+            if (newUsername != null && !newUsername.isEmpty()) {
+                sql.append("admin_username = ?");
+                params.add(newUsername);
+                first = false;
+            }
+
+            if (newPassword != null && !newPassword.isEmpty() && passCol != null) {
+                if (!first) sql.append(", ");
+                sql.append(passCol).append(" = ?");
+                params.add(newPassword);
+                first = false;
+            }
+
+            if (nameCol != null && name != null) {
+                if (!first) sql.append(", ");
+                sql.append(nameCol).append(" = ?");
+                params.add(name);
+                first = false;
+            }
+
+            if (email != null) {
+                if (!first) sql.append(", ");
+                sql.append("email = ?");
+                params.add(email);
+                first = false;
+            }
+
+            if (address != null) {
+                if (!first) sql.append(", ");
+                sql.append("address = ?");
+                params.add(address);
+                first = false;
+            }
+
+            if (phoneCol != null && phone != null) {
+                if (!first) sql.append(", ");
+                sql.append(phoneCol).append(" = ?");
+                params.add(phone);
+                first = false;
+            }
+
+            // Nothing to update
+            if (first) {
+                conn.rollback();
+                return false;
+            }
+
+            sql.append(" WHERE admin_username = ?");
+            params.add(currentAdminUsername);
+
+            // 4) Run UPDATE Admin
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                int i = 1;
+                for (Object p : params) {
+                    if (p instanceof String) {
+                        ps.setString(i++, (String) p);
+                    } else if (p instanceof Integer) {
+                        ps.setInt(i++, (Integer) p);
+                    } else {
+                        ps.setObject(i++, p);
+                    }
+                }
+                ps.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
+            return false;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
+            }
+        }
+    }
+
     // Check if a column exists on a table for the connected schema
     private boolean hasColumn(Connection conn, String table, String column) {
         try {
