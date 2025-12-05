@@ -366,6 +366,46 @@ public class QueryDAO {
         return results;
     }
 
+    //    New Releases by newest IDs
+    // Newest Movies by highest numeric media_ID
+    public List<Media> getNewestMovies(int limit) {
+        List<Media> results = new ArrayList<>();
+        if (limit <= 0) limit = 7;
+        String sql = "SELECT media_ID, title, genre, release_date, IMBD_link " +
+                "FROM Media " +
+                "WHERE media_ID REGEXP '^[0-9]+$' " +
+                "ORDER BY CAST(media_ID AS UNSIGNED) DESC " +
+                "LIMIT ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) results.add(mapMedia(rs));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return results;
+    }
+
+    // Newest Series by highest numeric part of ID
+    public List<Media> getNewestSeries(int limit) {
+        List<Media> results = new ArrayList<>();
+        if (limit <= 0) limit = 7;
+        String sql = "SELECT media_ID, title, genre, release_date, IMBD_link " +
+                "FROM Media " +
+                "WHERE media_ID LIKE 'S%' " +
+                "ORDER BY CAST(SUBSTRING(media_ID, 2) AS UNSIGNED) DESC " +
+                "LIMIT ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) results.add(mapMedia(rs));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return results;
+    }
+
+
     // Recent activity for Admin home (latest watches)
     public List<String[]> getRecentActivity(int limit) {
         List<String[]> rows = new ArrayList<>();

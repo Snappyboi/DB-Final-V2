@@ -37,9 +37,10 @@ public class MemberHomePage extends JPanel {
         // Trending from DB
         content.add(trendingRowFromDB("Trending Now", 7));
         content.add(Box.createVerticalStrut(16));
-        content.add(section("New Releases", mockTitles("New", 24), 7));
+        // New Releases rows (based on highest media_ID values) — match Browse/Trending cutoff & arrows
+        content.add(newReleasesMoviesRow("New Movies", 7));
         content.add(Box.createVerticalStrut(16));
-        content.add(section("Because you watched", mockTitles("Because", 24), 7));
+        content.add(newReleasesSeriesRow("New Series", 7));
 
         // Page scroll
         JScrollPane scroll = new JScrollPane(content, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -120,6 +121,58 @@ public class MemberHomePage extends JPanel {
             Image img = ImageUtils.loadPosterImage("/MoviePosters/" + f, 160, 240);
             ThumbnailCard card = new ThumbnailCard(titleFromFile, img);
             card.setOnClick(() -> nav.showMediaDetails(titleFromFile));
+            row.add(card);
+        }
+
+        JScrollPane rowScroll = buildRowScroll(row, visibleCount);
+        wrap.add(buildScrollWithArrows(rowScroll, row, visibleCount), BorderLayout.CENTER);
+        return wrap;
+    }
+
+    private JPanel newReleasesMoviesRow(String title, int visibleCount) {
+        List<Media> items;
+        try {
+            items = BackendService.getNewestMovies(15);
+        } catch (Exception e) {
+            items = new ArrayList<>();
+        }
+        return buildMediaRow(title, items, visibleCount);
+    }
+
+    private JPanel newReleasesSeriesRow(String title, int visibleCount) {
+        List<Media> items;
+        try {
+            items = BackendService.getNewestSeries(15);
+        } catch (Exception e) {
+            items = new ArrayList<>();
+        }
+        return buildMediaRow(title, items, visibleCount);
+    }
+
+    private JPanel buildMediaRow(String title, List<Media> items, int visibleCount) {
+        if (items == null || items.isEmpty()) {
+            // Fallback to mock titles if no data
+            return section(title, mockTitles(title, 14), visibleCount);
+        }
+
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.setOpaque(false);
+
+        JLabel label = new JLabel(title);
+        label.setForeground(Theme.TEXT_PRIMARY);
+        label.setFont(Theme.fontBold(18));
+        label.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
+        wrap.add(label, BorderLayout.NORTH);
+
+        JPanel row = new JPanel();
+        row.setOpaque(false);
+        row.setLayout(new FlowLayout(FlowLayout.LEFT, 12, 0));
+
+        for (Media m : items) {
+            String t = m.getTitle();
+            Image img = ImageUtils.loadPosterImageForTitle(t, 160, 240);
+            ThumbnailCard card = new ThumbnailCard(t, img);
+            card.setOnClick(() -> nav.showMediaDetails(t));
             row.add(card);
         }
 
@@ -230,8 +283,10 @@ public class MemberHomePage extends JPanel {
         int leftW = left.getPreferredSize().width + gutter;
         int rightW = right.getPreferredSize().width + gutter;
 
+        int overlayReserve = 16; // matches overlay scrollbar width (approx) + a little gap
+
         // Fix container width so BoxLayout doesn't stretch it
-        Dimension contSize = new Dimension(visibleW + leftW + rightW, rowScroll.getPreferredSize().height);
+        Dimension contSize = new Dimension(visibleW + leftW + rightW + overlayReserve, rowScroll.getPreferredSize().height);
         container.setPreferredSize(contSize);
         container.setMinimumSize(contSize);
         container.setMaximumSize(contSize);
@@ -283,7 +338,11 @@ public class MemberHomePage extends JPanel {
 
         container.add(west, BorderLayout.WEST);
         container.add(east, BorderLayout.EAST);
-        return container;
+
+        JPanel outer = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        outer.setOpaque(false);
+        outer.add(container);
+        return outer;
     }
 
     private JButton makeArrowButton(String text) {

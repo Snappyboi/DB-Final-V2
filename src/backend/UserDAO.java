@@ -67,7 +67,7 @@ public class UserDAO {
         return info;
     }
 
-    // Members + derived subscription + active flag
+    // Members + subscription (from Subscribes) + active flag
     public java.util.List<Map<String, String>> listMembersWithSubscription() {
         java.util.List<Map<String, String>> out = new java.util.ArrayList<>();
         // We grab ID to compute subscription level below
@@ -79,7 +79,7 @@ public class UserDAO {
                 Map<String, String> row = new HashMap<>();
                 int id = -1;
                 try { id = rs.getInt("ID"); } catch (SQLException ignored) {}
-                String sub = deriveSubscriptionById(id);
+                String sub = getMemberSubscriptionById(conn, id);
                 // Active comes from Stream_session
                 String active = isMemberActiveById(conn, id) ? "Yes" : "No";
 
@@ -109,7 +109,7 @@ public class UserDAO {
                 if (rs.next()) {
                     int id = -1;
                     try { id = rs.getInt("ID"); } catch (SQLException ignored) {}
-                    String sub = deriveSubscriptionById(id);
+                    String sub = getMemberSubscriptionById(conn, id);
                     String active = isMemberActiveById(conn, id) ? "Yes" : "No";
 
                     info.put("username", safeGet(rs, "username"));
@@ -402,10 +402,23 @@ public class UserDAO {
             }
             if (id == null) return false;
             conn.setAutoCommit(false);
-            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Subscribes WHERE ID = ?")) {
-                ps.setInt(1, id);
-                ps.executeUpdate();
-            }
+            // Remove any subscription rows tied to this member
+            try {
+                String memberFkCol = detectSubscribesMemberIdColumn(conn);
+                if (memberFkCol != null) {
+                    String sql = "DELETE FROM Subscribes WHERE " + memberFkCol + " = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setInt(1, id);
+                        ps.executeUpdate();
+                    }
+                } else {
+                    // try common default
+                    try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Subscribes WHERE ID = ?")) {
+                        ps.setInt(1, id);
+                        ps.executeUpdate();
+                    } catch (SQLException ignored) {}
+                }
+            } catch (SQLException ignored) {}
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Watch_History WHERE member_id = ?")) {
                 ps.setInt(1, id);
                 ps.executeUpdate();
@@ -433,6 +446,143 @@ public class UserDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    //     Subscription update helpers
+    // Normalize subscription level to supported values
+    private String normalizeSubscription(String level) {
+        if (level == null || level.isBlank() || "-".equalsIgnoreCase(level)) return "Basic";
+        String v = level.trim();
+        if (v.equalsIgnoreCase("basic")) return "Basic";
+        if (v.equalsIgnoreCase("premium")) return "Premium";
+        return "Basic";
+    }
+
+    // Detect column name used for subscription level in Subscribes table
+    private String detectSubscribesLevelColumn(Connection conn) throws SQLException {
+        if (hasColumn(conn, "Subscribes", "Subscription_level")) return "Subscription_level";
+        if (hasColumn(conn, "Subscribes", "subscription_level")) return "subscription_level";
+        if (hasColumn(conn, "Subscribes", "subscription_number")) return "subscription_number";
+        return null;
+    }
+
+    // Detect the member ID key column in Subscribes table
+    private String detectSubscribesMemberIdColumn(Connection conn) throws SQLException {
+        if (hasColumn(conn, "Subscribes", "ID")) return "ID"; // common in this project schema
+        if (hasColumn(conn, "Subscribes", "member_id")) return "member_id";
+        if (hasColumn(conn, "Subscribes", "memberID")) return "memberID";
+        if (hasColumn(conn, "Subscribes", "memberId")) return "memberId";
+        if (hasColumn(conn, "Subscribes", "person_id")) return "person_id";
+        return null;
+    }
+
+    // Admin: Update subscription by username
+    public boolean updateMemberSubscriptionByUsername(String username, String newLevel) {
+        if (username == null || username.isBlank()) return false;
+        String find = "SELECT ID FROM Member WHERE username = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(find)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return false;
+                int id = rs.getInt(1);
+                return updateMemberSubscriptionById(id, newLevel);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // member ID update if exists, else insert
+    public boolean updateMemberSubscriptionById(int memberId, String newLevel) {
+        if (memberId <= 0) return false;
+        String level = normalizeSubscription(newLevel);
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            String levelCol = detectSubscribesLevelColumn(conn);
+            String memberFkCol = detectSubscribesMemberIdColumn(conn);
+
+            if (memberFkCol == null) {
+                memberFkCol = "ID";
+            }
+
+            int affected = 0;
+            if (levelCol != null) {
+                String sqlUpdate = "UPDATE Subscribes SET " + levelCol + " = ? WHERE " + memberFkCol + " = ?";
+                try (PreparedStatement up = conn.prepareStatement(sqlUpdate)) {
+                    up.setString(1, level);
+                    up.setInt(2, memberId);
+                    affected = up.executeUpdate();
+                }
+                if (affected == 0) {
+                    String sqlInsert = "INSERT INTO Subscribes(" + memberFkCol + ", " + levelCol + ") VALUES (?, ?)";
+                    try (PreparedStatement ins = conn.prepareStatement(sqlInsert)) {
+                        ins.setInt(1, memberId);
+                        ins.setString(2, level);
+                        ins.executeUpdate();
+                        affected = 1;
+                    }
+                }
+            } else {
+                // No recognizable subscription column; ensure at least a row exists for this member
+                String sqlCheck = "SELECT COUNT(*) FROM Subscribes WHERE " + memberFkCol + " = ?";
+                int cnt = 0;
+                try (PreparedStatement chk = conn.prepareStatement(sqlCheck)) {
+                    chk.setInt(1, memberId);
+                    try (ResultSet rs = chk.executeQuery()) { if (rs.next()) cnt = rs.getInt(1); }
+                }
+                if (cnt == 0) {
+                    String sqlInsert = "INSERT INTO Subscribes(" + memberFkCol + ") VALUES (?)";
+                    try (PreparedStatement ins = conn.prepareStatement(sqlInsert)) {
+                        ins.setInt(1, memberId);
+                        ins.executeUpdate();
+                        affected = 1;
+                    }
+                } else {
+                    affected = 1;
+                }
+            }
+
+            if (affected <= 0) { conn.rollback(); return false; }
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
+            return false;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
+            }
+        }
+    }
+
+    // read subscription string from Subscribes for a member
+    private String getMemberSubscriptionById(Connection conn, int memberId) {
+        if (conn == null || memberId <= 0) return "-";
+        try {
+            String levelCol = detectSubscribesLevelColumn(conn);
+            String memberFkCol = detectSubscribesMemberIdColumn(conn);
+            if (memberFkCol == null) memberFkCol = "ID";
+            if (levelCol == null) return "-";
+            String sql = "SELECT " + levelCol + " FROM Subscribes WHERE " + memberFkCol + " = ? LIMIT 1";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, memberId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        String v = rs.getString(1);
+                        return (v == null || v.isBlank()) ? "-" : v;
+                    }
+                }
+            }
+        } catch (SQLException ignored) {}
+        return "-";
     }
 
     // Create a member with subscription

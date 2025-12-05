@@ -23,6 +23,10 @@ public class BackendService {
     public static List<Media> getTopMediaThisMonth(int limit) { return queryDAO.getTopMediaThisMonth(limit); }
     public static List<Media> getTrendingLast24h(int limit) { return queryDAO.getTrendingLast24h(limit); }
 
+    // New Releases by newest IDs
+    public static List<Media> getNewestMovies(int limit) { return queryDAO.getNewestMovies(limit); }
+    public static List<Media> getNewestSeries(int limit) { return queryDAO.getNewestSeries(limit); }
+
 
     // Account info
     public static java.util.Map<String, String> getMemberAccountInfo(String username) { return userDAO.getMemberAccountInfo(username); }
@@ -81,6 +85,11 @@ public class BackendService {
     public static boolean createMemberFull(String username, String password, String name, String email, String address, String phone,
                                            String subscriptionLevel, boolean active) {
         return userDAO.createMemberWithSubscription(username, password, name, email, address, phone, subscriptionLevel, active);
+    }
+
+    // Admin: Update a member's subscription level (Basic/Premium) by username
+    public static boolean updateMemberSubscription(String username, String subscriptionLevel) {
+        return userDAO.updateMemberSubscriptionByUsername(username, subscriptionLevel);
     }
     public static void loginToSession(int member_id) throws SQLException {
         queryDAO.loginToSession(member_id);
