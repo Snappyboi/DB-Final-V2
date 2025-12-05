@@ -218,21 +218,50 @@ public class UserDAO {
         return null;
     }
 
-    // Public wrapper to create Person
+    // Helper to get next person ID value
+    private int getNextPersonId(Connection conn) throws SQLException {
+        String sql = "SELECT COALESCE(MAX(ID), 0) + 1 AS nextId FROM Person";
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("nextId");
+            }
+        }
+        return 1;
+    }
+
+    // Create Person row and return its ID
     public Integer createPerson(String name, String email, String address, String phone) {
         Connection conn = null;
         try {
             conn = DBConnection.getConnection();
             conn.setAutoCommit(false);
-            Integer id = tryInsertPerson(conn, name, email, address, phone);
+
+            int newId = getNextPersonId(conn);
+
+            String sql = "INSERT INTO Person(ID, email, person_name, address, phone_number) " +
+                    "VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, newId);
+                ps.setString(2, email);
+                ps.setString(3, name);
+                ps.setString(4, address);
+                ps.setString(5, phone);
+                ps.executeUpdate();
+            }
+
             conn.commit();
-            return id;
+            return newId;
         } catch (SQLException e) {
             e.printStackTrace();
-            if (conn != null) try { conn.rollback(); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
             return null;
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
+            }
         }
     }
 
@@ -241,38 +270,51 @@ public class UserDAO {
                                            String username, String password,
                                            String name, String email, String address, String phone,
                                            String subscriptionLevel, boolean active) {
-        if (username == null || username.isEmpty() || password == null || password.isEmpty()) return false;
+        if (username == null || username.isEmpty() ||
+                password == null || password.isEmpty() ||
+                personId == null) {
+            return false;
+        }
+
         Connection conn = null;
         try {
             conn = DBConnection.getConnection();
             conn.setAutoCommit(false);
 
-            boolean hasPersonFk = hasColumn(conn, "Member", "person_id");
             boolean hasSub = hasColumn(conn, "Member", "subscription_level");
             boolean hasActive = hasColumn(conn, "Member", "active");
 
-            StringBuilder cols = new StringBuilder("username, password, member_name, email, address, phone_number");
-            if (hasPersonFk) cols.append(", person_id");
-            if (hasSub) cols.append(", subscription_level");
-            if (hasActive) cols.append(", active");
+            // ID links Member to Person
+            StringBuilder cols = new StringBuilder("ID, username, password, member_name, email, address, phone_number");
+            StringBuilder vals = new StringBuilder("?, ?, ?, ?, ?, ?, ?");
 
-            StringBuilder vals = new StringBuilder("?, ?, ?, ?, ?, ?");
-            if (hasPersonFk) vals.append(", ?");
-            if (hasSub) vals.append(", ?");
-            if (hasActive) vals.append(", ?");
+            if (hasSub) {
+                cols.append(", subscription_level");
+                vals.append(", ?");
+            }
+            if (hasActive) {
+                cols.append(", active");
+                vals.append(", ?");
+            }
 
             String sql = "INSERT INTO Member(" + cols + ") VALUES (" + vals + ")";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 int i = 1;
+                ps.setInt(i++, personId);
                 ps.setString(i++, username);
                 ps.setString(i++, password);
                 ps.setString(i++, name);
                 ps.setString(i++, email);
                 ps.setString(i++, address);
                 ps.setString(i++, phone);
-                if (hasPersonFk) ps.setObject(i++, personId);
-                if (hasSub) ps.setString(i++, subscriptionLevel == null ? "-" : subscriptionLevel);
-                if (hasActive) ps.setBoolean(i++, active);
+
+                if (hasSub) {
+                    ps.setString(i++, subscriptionLevel == null ? "-" : subscriptionLevel);
+                }
+                if (hasActive) {
+                    ps.setBoolean(i++, active);
+                }
+
                 ps.executeUpdate();
             }
 
@@ -280,10 +322,14 @@ public class UserDAO {
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
-            if (conn != null) try { conn.rollback(); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
             return false;
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
+            }
         }
     }
 
@@ -351,67 +397,21 @@ public class UserDAO {
     // Create a member with subscription
     public boolean createMemberWithSubscription(String username, String password, String name, String email,
                                                 String address, String phone, String subscriptionLevel, boolean active) {
-        if (username == null || username.isEmpty() || password == null || password.isEmpty()) return false;
-        Connection conn = null;
-        try {
-            conn = DBConnection.getConnection();
-            conn.setAutoCommit(false);
-
-            // 1) Try to insert into Person table (if present)
-            Integer personId = tryInsertPerson(conn, name, email, address, phone);
-
-            // 2) Determine if Member table has subscription columns
-            boolean hasSub = hasColumn(conn, "Member", "subscription_level");
-            boolean hasActive = hasColumn(conn, "Member", "active");
-
-            boolean inserted;
-            if (hasSub || hasActive) {
-                StringBuilder sql = new StringBuilder("INSERT INTO Member(username, password, member_name, email, address, phone_number");
-                if (hasSub) sql.append(", subscription_level");
-                if (hasActive) sql.append(", active");
-                sql.append(") VALUES (?, ?, ?, ?, ?, ?");
-                if (hasSub) sql.append(", ?");
-                if (hasActive) sql.append(", ?");
-                sql.append(")");
-                try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-                    int idx = 1;
-                    ps.setString(idx++, username);
-                    ps.setString(idx++, password);
-                    ps.setString(idx++, name);
-                    ps.setString(idx++, email);
-                    ps.setString(idx++, address);
-                    ps.setString(idx++, phone);
-                    if (hasSub) ps.setString(idx++, subscriptionLevel == null ? "-" : subscriptionLevel);
-                    if (hasActive) ps.setBoolean(idx++, active);
-                    inserted = ps.executeUpdate() > 0;
-                }
-            } else {
-                // Fallback to base insert
-                String sql = "INSERT INTO Member(username, password, member_name, email, address, phone_number) VALUES (?, ?, ?, ?, ?, ?)";
-                try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                    ps.setString(1, username);
-                    ps.setString(2, password);
-                    ps.setString(3, name);
-                    ps.setString(4, email);
-                    ps.setString(5, address);
-                    ps.setString(6, phone);
-                    inserted = ps.executeUpdate() > 0;
-                }
-            }
-
-            conn.commit();
-            return inserted;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ignored) {}
-            }
+        if (username == null || username.isEmpty() ||
+                password == null || password.isEmpty()) {
             return false;
-        } finally {
-            if (conn != null) {
-                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
-            }
         }
+
+        // 1) Create the Person row and get its ID
+        Integer personId = createPerson(name, email, address, phone);
+        if (personId == null) {
+            // If Person insert failed, don't continue
+            return false;
+        }
+
+        // 2) Create matching Member row that references the same ID
+        return createMemberUsingPerson(personId, username, password, name, email, address, phone,
+                subscriptionLevel, active);
     }
 
     // Check if a column exists on a table for the connected schema
