@@ -24,12 +24,12 @@ public class AdminHomePage extends JPanel {
         toolbar.setBorder(BorderFactory.createEmptyBorder(8, 24, 8, 24));
 
         RoundedButton addMedia = new RoundedButton("Add Media").gold();
-        RoundedButton removeMedia = new RoundedButton("Remove Media");
+        RoundedButton removeMedia = new RoundedButton("Remove Media").gold();
         RoundedButton addMember = new RoundedButton("Add Member").gold();
         RoundedButton removeMember = new RoundedButton("Remove Member");
-        RoundedButton trends = new RoundedButton("View Trends");
-        RoundedButton memberStreaming = new RoundedButton("Member Streaming");
-        RoundedButton subscriptions = new RoundedButton("Subscriptions");
+        RoundedButton trends = new RoundedButton("View Trends").gold();
+        RoundedButton memberStreaming = new RoundedButton("Member Streaming").gold();
+        RoundedButton subscriptions = new RoundedButton("Subscriptions").gold();
 
         addMedia.addActionListener(e -> {
             if (nav instanceof frontend.app) {

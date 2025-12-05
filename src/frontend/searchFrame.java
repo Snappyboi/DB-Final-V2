@@ -60,11 +60,11 @@ public class searchFrame extends JPanel {
     }
 
     private void styleField(JTextField f) {
-        f.setBackground(Theme.SURFACE);
-        f.setForeground(Theme.TEXT_PRIMARY);
-        f.setCaretColor(Theme.TEXT_PRIMARY);
+        f.setBackground(Color.WHITE);
+        f.setForeground(new Color(30, 30, 30));
+        f.setCaretColor(new Color(30, 30, 30));
         f.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(70, 70, 70), 1),
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
                 BorderFactory.createEmptyBorder(10, 12, 10, 12)
         ));
         f.setFont(Theme.fontRegular(14));
