@@ -169,15 +169,11 @@ public class LoginFrame extends JPanel {
         }
 
         if (BackendService.loginAdmin(user, pass)) {
+            // Admin login
             nav.setCurrentUsername(user);
             if (nav instanceof AdminAware) { ((AdminAware) nav).setAdmin(true); }
-            try{
-                BackendService.loginToSession(BackendService.getMemberIdByUsername(user));
-                nav.showAdminHome();
-            } catch(SQLException e){
-                statusLabel.setText("Cannot log in.");
-            }
-
+            // Do NOT call member session login for admins
+            nav.showAdminHome();
 
         } else if (BackendService.loginMember(user, pass)) {
             nav.setCurrentUsername(user);
@@ -186,8 +182,8 @@ public class LoginFrame extends JPanel {
                 BackendService.loginToSession(BackendService.getMemberIdByUsername(user));
                 nav.showMemberHome();
             } catch(SQLException e){
-            statusLabel.setText("Cannot log in.");
-        }
+                statusLabel.setText("Cannot log in.");
+            }
 
         } else {
             statusLabel.setText("Incorrect username or password.");
