@@ -5,6 +5,10 @@ import frontend.components.GradientBackgroundPanel;
 import javax.swing.*;
 import java.awt.*;
 
+import backend.BackendService;
+import frontend.*;
+import frontend.components.GradientBackgroundPanel;
+
 // ACED Streaming UI entry point
 public class app implements Navigation, AdminAware {
     private final JFrame frame;
@@ -115,7 +119,10 @@ public class app implements Navigation, AdminAware {
     @Override public void showAccount() { try { if (accountPage != null) accountPage.refreshData(); } catch (Exception ignored) {} cards.show(root, ACCOUNT); }
     @Override public void showWatchHistory() { try { if (watchHistoryPage != null) watchHistoryPage.refresh(); } catch (Exception ignored) {} cards.show(root, WATCH_HISTORY); }
     @Override public void showBrowseSearch() { try { if (browseSearchPage != null) browseSearchPage.focusSearch(); } catch (Exception ignored) {} cards.show(root, BROWSE_SEARCH); }
-    @Override public void logout() { this.currentUsername = null; this.adminUser = false; showLogin(); }
+    @Override public void logout(int member_id) {
+        BackendService.logout(member_id);
+        this.currentUsername = null; this.adminUser = false; showLogin();
+    }
 
     // Track logged-in user
     @Override public void setCurrentUsername(String username) { this.currentUsername = username; }

@@ -9,6 +9,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
+import java.sql.SQLException;
 
 public class LoginFrame extends JPanel {
     private final Navigation nav;
@@ -170,14 +171,28 @@ public class LoginFrame extends JPanel {
         if (BackendService.loginAdmin(user, pass)) {
             nav.setCurrentUsername(user);
             if (nav instanceof AdminAware) { ((AdminAware) nav).setAdmin(true); }
-            nav.showAdminHome();
+            try{
+                BackendService.loginToSession(BackendService.getMemberIdByUsername(user));
+                nav.showAdminHome();
+            } catch(SQLException e){
+                statusLabel.setText("Cannot log in.");
+            }
+
+
         } else if (BackendService.loginMember(user, pass)) {
             nav.setCurrentUsername(user);
             if (nav instanceof AdminAware) { ((AdminAware) nav).setAdmin(false); }
-            nav.showMemberHome();
+            try{
+                BackendService.loginToSession(BackendService.getMemberIdByUsername(user));
+                nav.showMemberHome();
+            } catch(SQLException e){
+            statusLabel.setText("Cannot log in.");
+        }
+
         } else {
             statusLabel.setText("Incorrect username or password.");
         }
+
     }
 private void showRegisterDialog() {
         Color labelFg = Theme.TEXT_PRIMARY;

@@ -1,5 +1,6 @@
 package backend;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class BackendService {
@@ -81,6 +82,9 @@ public class BackendService {
                                            String subscriptionLevel, boolean active) {
         return userDAO.createMemberWithSubscription(username, password, name, email, address, phone, subscriptionLevel, active);
     }
+    public static void loginToSession(int member_id) throws SQLException {
+        queryDAO.loginToSession(member_id);
+    }
 
     // Admin: Person/Member two-step helpers
     public static Integer createPerson(String name, String email, String address, String phone) {
@@ -139,4 +143,5 @@ public class BackendService {
                 phone,
                 newPassword);
     }
+
 }
