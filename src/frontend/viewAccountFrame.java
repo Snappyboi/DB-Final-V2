@@ -34,7 +34,7 @@ public class viewAccountFrame extends JPanel {
     public viewAccountFrame(Navigation nav) {
         this.nav = nav;
         setLayout(new BorderLayout());
-        setBackground(Theme.BACKGROUND);
+        setOpaque(false);
 
         // Top nav
         add(new NavBar(nav, true), BorderLayout.NORTH);
@@ -272,4 +272,3 @@ public class viewAccountFrame extends JPanel {
         }
     }
 }
-

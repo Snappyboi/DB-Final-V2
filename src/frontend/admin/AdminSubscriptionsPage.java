@@ -21,7 +21,7 @@ public class AdminSubscriptionsPage extends JPanel {
     public AdminSubscriptionsPage(Navigation nav) {
         this.nav = nav;
         setLayout(new BorderLayout());
-        setBackground(AdminTheme.BACKGROUND);
+        setOpaque(false);
 
         add(new NavBar(nav, true), BorderLayout.NORTH);
 
@@ -62,7 +62,8 @@ public class AdminSubscriptionsPage extends JPanel {
         card.setLayout(new BorderLayout());
         card.setBorder(BorderFactory.createEmptyBorder(12, 24, 24, 24));
         JScrollPane sp = new JScrollPane(table);
-        sp.getViewport().setBackground(AdminTheme.BACKGROUND);
+        sp.setOpaque(false);
+        sp.getViewport().setOpaque(false);
         card.add(sp, BorderLayout.CENTER);
 
         JPanel center = new JPanel(new BorderLayout());

@@ -17,7 +17,7 @@ public class AdminAddMediaPage extends JPanel {
     public AdminAddMediaPage(Navigation nav) {
         this.nav = nav;
         setLayout(new BorderLayout());
-        setBackground(AdminTheme.BACKGROUND);
+        setOpaque(false);
 
         add(new NavBar(nav, true), BorderLayout.NORTH);
 

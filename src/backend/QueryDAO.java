@@ -447,6 +447,20 @@ public class QueryDAO {
         }
     }
 
+    public void addMediaToSession(int member_id, String media_id){
+        String sql = """
+                INSERT INTO Stream_session(member_id, media_id) VALUES (?, ?)
+                """;
+        try(Connection conn = DBConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1,member_id);
+            ps.setString(2,media_id);
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void deleteIfExists(Connection conn, String sql, String... args) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             for (int i = 0; i < args.length; i++) ps.setString(i + 1, args[i]);
