@@ -214,21 +214,30 @@ public class MemberHomePage extends JPanel {
     private JPanel buildScrollWithArrows(JScrollPane rowScroll, JPanel row, int visibleCount) {
         JPanel container = new JPanel(new BorderLayout());
         container.setOpaque(false);
-        container.add(rowScroll, BorderLayout.CENTER);
 
-        // Fix container width so BoxLayout doesn't stretch it
+        // Create arrows first so we can size the container to their actual widths
+        JButton left = makeArrowButton("◄");
+        JButton right = makeArrowButton("►");
+
+        //  intended center viewport width )
         int step = computeCardStepFromRow(row);
         int gap = 12;
         if (row.getLayout() instanceof FlowLayout) gap = ((FlowLayout) row.getLayout()).getHgap();
         int visibleW = Math.max(50, step * visibleCount - gap);
-        int arrowsAllowance = 160; // allow room for buttons on both sides
-        Dimension contSize = new Dimension(visibleW + arrowsAllowance, rowScroll.getPreferredSize().height);
+
+        // Measure arrow button widths and add small gutters so cards never touch buttons
+        int gutter = 8;
+        int leftW = left.getPreferredSize().width + gutter;
+        int rightW = right.getPreferredSize().width + gutter;
+
+        // Fix container width so BoxLayout doesn't stretch it
+        Dimension contSize = new Dimension(visibleW + leftW + rightW, rowScroll.getPreferredSize().height);
         container.setPreferredSize(contSize);
         container.setMinimumSize(contSize);
         container.setMaximumSize(contSize);
 
-        JButton left = makeArrowButton("◄");
-        JButton right = makeArrowButton("►");
+        // Add the scroll  after sizing decisions
+        container.add(rowScroll, BorderLayout.CENTER);
 
         // Move exactly one card per click
         Runnable updateButtons = () -> SwingUtilities.invokeLater(() -> {
@@ -259,9 +268,17 @@ public class MemberHomePage extends JPanel {
 
         JPanel west = new JPanel(new GridBagLayout());
         west.setOpaque(false);
+        west.setPreferredSize(new Dimension(leftW, contSize.height));
+        west.setMinimumSize(new Dimension(leftW, 0));
+        west.setMaximumSize(new Dimension(leftW, Integer.MAX_VALUE));
+        west.setBorder(BorderFactory.createEmptyBorder(0, gutter / 2, 0, gutter / 2));
         west.add(left);
         JPanel east = new JPanel(new GridBagLayout());
         east.setOpaque(false);
+        east.setPreferredSize(new Dimension(rightW, contSize.height));
+        east.setMinimumSize(new Dimension(rightW, 0));
+        east.setMaximumSize(new Dimension(rightW, Integer.MAX_VALUE));
+        east.setBorder(BorderFactory.createEmptyBorder(0, gutter / 2, 0, gutter / 2));
         east.add(right);
 
         container.add(west, BorderLayout.WEST);
