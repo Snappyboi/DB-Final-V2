@@ -2,8 +2,6 @@ package frontend.components;
 
 import backend.BackendService;
 import frontend.Navigation;
-import frontend.Theme;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;

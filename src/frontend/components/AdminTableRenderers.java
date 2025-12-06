@@ -1,8 +1,6 @@
 package frontend.components;
 
 import frontend.Theme;
-import frontend.components.ImageUtils;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;

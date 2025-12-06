@@ -28,7 +28,7 @@ public class LoginFrame extends JPanel {
         // centered ACED logo 
         JLabel logo = new JLabel();
         logo.setOpaque(false);
-        logo.setIcon(loadAcedLogoByWidth(240)); // slightly larger
+        logo.setIcon(loadAcedLogoByWidth(240)); 
 
         JLabel tagline = new JLabel("Welcome to your home theatre");
         tagline.setFont(Theme.fontRegular(14));
@@ -99,7 +99,7 @@ public class LoginFrame extends JPanel {
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
         buttons.setOpaque(false);
 
-        // Modern, flat-ish buttons
+        // buttons
         loginBtn.setBackground(Theme.BB_BLUE);
         loginBtn.setForeground(Color.WHITE);
         loginBtn.setHorizontalAlignment(SwingConstants.CENTER);
@@ -142,7 +142,7 @@ public class LoginFrame extends JPanel {
         loginBtn.addActionListener(e -> doLogin());
         registerBtn.addActionListener(e -> showRegisterDialog());
     }
-    // Expose login button for app shell
+
     public JButton getDefaultButton() { return loginBtn; }
 
     @Override
@@ -351,7 +351,7 @@ private void addFieldRow(JPanel panel, GridBagConstraints gc, String label, JCom
         return new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB));
     }
 
-    // ===== Field styling + modern focus ring =====
+    // Field styling 
     private void stylizeField(JTextField field) {
         field.setBackground(Color.WHITE);
         field.setForeground(new Color(15, 35, 90));
@@ -384,7 +384,7 @@ private void addFieldRow(JPanel panel, GridBagConstraints gc, String label, JCom
         });
     }
 
-    // ===== Inner class that draws the yellow ticket + soft spotlight =====
+    //  class that draws the yellow ticket 
     private class TicketPanel extends JPanel {
         TicketPanel() {
             setOpaque(false);
@@ -401,7 +401,7 @@ private void addFieldRow(JPanel panel, GridBagConstraints gc, String label, JCom
             int w = getWidth();
             int h = getHeight();
 
-            // ---- Ticket shape ----
+            // Ticket shape 
             int margin = 8;
             int rx = margin;
             int ry = margin;
@@ -428,7 +428,7 @@ private void addFieldRow(JPanel panel, GridBagConstraints gc, String label, JCom
             ticket.subtract(new Area(leftNotch));
             ticket.subtract(new Area(rightNotch));
 
-            // Soft spotlight clipped to ticket to avoid outside glow
+            /
             int glowSize = Math.max(w, h);
             RadialGradientPaint glow = new RadialGradientPaint(
                     new Point2D.Float(w / 2f, h / 2f),
@@ -445,19 +445,19 @@ private void addFieldRow(JPanel panel, GridBagConstraints gc, String label, JCom
             g2.fill(ticket.getBounds2D());
             g2.setClip(oldClip);
 
-            // Fill ticket with slight gradient
+            // Fill ticket 
             Color top = Theme.BB_YELLOW;
             Color bottom = new Color(0xFF, 0xCC, 0x00);
             GradientPaint fill = new GradientPaint(0, ry, top, 0, ry + rh, bottom);
             g2.setPaint(fill);
             g2.fill(ticket);
 
-            // Outer border (slightly thinner) using Blockbuster blue
+            // Outer border 
             g2.setStroke(new BasicStroke(2.5f));
             g2.setColor(Theme.BB_BLUE);
             g2.draw(ticket);
 
-            // Inner decorative border
+            // Inner border
             int inset = 12;
             RoundRectangle2D inner = new RoundRectangle2D.Float(
                     rx + inset, ry + inset,
