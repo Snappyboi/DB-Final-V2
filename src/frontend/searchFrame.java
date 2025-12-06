@@ -34,7 +34,7 @@ public class searchFrame extends JPanel {
         styleField(searchField);
 
         filterBox = new JComboBox<>(new String[]{
-                "All", "Title", "Movies", "Series", "Actor", "Genre", "Director"
+                "All", "Title", "Movies", "Series", "Actor", "Genre", "Director", "Award-winning"
         });
         styleCombo(filterBox);
 

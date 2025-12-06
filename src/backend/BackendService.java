@@ -54,6 +54,10 @@ public class BackendService {
     // Media details (adds directors/cast strings)
     public static Media getMediaDetailsByTitle(String title) { return queryDAO.getMediaDetailsByTitle(title); }
 
+    // Awards
+    public static java.util.List<String> getAwardsForMedia(String mediaId) {
+        return queryDAO.getAwardsForMedia(mediaId);
+    }
     // Get ID by username
     public static int getMemberIdByUsername(String username) { return queryDAO.getMemberIdByUsername(username); } // -1 if not found
     //add streamed media to watch history

@@ -30,6 +30,12 @@ public class QueryDAO {
                             "FROM Media m JOIN Series s ON m.media_ID = s.media_ID " +
                             "ORDER BY m.release_date DESC LIMIT 100";
                     break;
+                case "Award-winning":
+                    sql = "SELECT DISTINCT m.media_ID, m.title, m.genre, m.release_date, m.IMBD_link " +
+                            "FROM Media m " +
+                            "JOIN Earned e ON e.media_ID = m.media_ID " +
+                            "ORDER BY m.release_date DESC LIMIT 100";
+                    break;
                 case "Actor":
                 case "Director":
                 case "Genre":
@@ -84,6 +90,14 @@ public class QueryDAO {
                             "WHERE m.title LIKE ?";
                     paramCount = 1;
                     break;
+                case "Award-winning":
+                    // Award-winning with keyword
+                    sql = "SELECT DISTINCT m.media_ID, m.title, m.genre, m.release_date, m.IMBD_link " +
+                            "FROM Media m " +
+                            "JOIN Earned e ON e.media_ID = m.media_ID " +
+                            "WHERE m.title LIKE ?";
+                    paramCount = 1;
+                    break;
                 case "All":
                 default:
                     // Default: title search across all media
@@ -108,6 +122,42 @@ public class QueryDAO {
         }
         return results;
     }
+
+    //  Awards helpers
+    public java.util.List<String> getAwardsForMedia(String mediaId) {
+        java.util.List<String> awards = new java.util.ArrayList<>();
+
+        if (mediaId == null || mediaId.isBlank()) {
+            return awards;
+        }
+
+        String sql =
+                "SELECT e.award_name " +
+                        "FROM Earned e " +
+                        "WHERE e.media_ID = ? " +
+                        "ORDER BY e.award_name";
+
+        try (java.sql.Connection conn = DBConnection.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, mediaId);
+
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String name = rs.getString(1);
+                    if (name != null && !name.isBlank()) {
+                        awards.add(name);
+                    }
+                }
+            }
+        } catch (java.sql.SQLException ex) {
+            // For debugging
+            ex.printStackTrace();
+        }
+
+        return awards;
+    }
+
 
 
     // Admin: search member streaming by username or media title.

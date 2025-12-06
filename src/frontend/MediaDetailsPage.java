@@ -21,6 +21,7 @@ public class MediaDetailsPage extends JPanel {
     private JLabel castLabel;
     private JLabel genreLabel;
     private JLabel releaseLabel;
+    private JLabel awardsLabel;
     private JLabel imdbLink;
     private JLabel posterLabel;
     private String currentImdbUrl; // populated from backend when media set
@@ -86,6 +87,9 @@ public class MediaDetailsPage extends JPanel {
         gc.gridy = 5; content.add(genreLabel, gc);
         gc.gridy = 6; content.add(releaseLabel, gc);
 
+        awardsLabel = labelRow("Awards", "-");
+        gc.gridy = 7; content.add(awardsLabel, gc);
+
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         actions.setOpaque(false);
 
@@ -96,7 +100,7 @@ public class MediaDetailsPage extends JPanel {
         actions.add(imdbLink);
         actions.add(watch);
 
-        gc.gridy = 7;
+        gc.gridy = 8;
         gc.fill = GridBagConstraints.NONE;
         content.add(actions, gc);
 
@@ -182,6 +186,7 @@ public class MediaDetailsPage extends JPanel {
         titleLabel.setText(title);
         // Pull details from backend
         String dir = "-", cast = "-", genre = "-", release = "-";
+        String awards = "-";
         currentImdbUrl = null;
         try {
             System.out.println("title: " + title);
@@ -195,6 +200,16 @@ public class MediaDetailsPage extends JPanel {
                 if (m.getCast() != null && !m.getCast().isBlank()) cast = cleanList(m.getCast());
                 if (m.getGenre() != null && !m.getGenre().isBlank()) genre = cleanList(m.getGenre());
                 if (m.getReleaseDate() != null && !m.getReleaseDate().isBlank()) release = m.getReleaseDate();
+
+                try {
+                    String mediaId = m.getMediaIdRaw();
+                    if (mediaId != null && !mediaId.isBlank()) {
+                        java.util.List<String> awds = BackendService.getAwardsForMedia(mediaId);
+                        if (awds != null && !awds.isEmpty()) {
+                            awards = String.join(", ", awds);
+                        }
+                    }
+                } catch (Exception ignored) {}
             }
         } catch (Exception ignored) {}
 
@@ -211,6 +226,7 @@ public class MediaDetailsPage extends JPanel {
 
         setField(genreLabel, "Genre", genre);
         setField(releaseLabel, "Release", release);
+        setField(awardsLabel, "Awards", awards);
         // Load poster
         JLabel newPoster = ImageUtils.createPosterLabelForTitle(title, 260, 380);
         posterLabel.setIcon(newPoster.getIcon());
